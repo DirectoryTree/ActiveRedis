@@ -414,7 +414,8 @@ abstract class Model
         return match ($this->keyType) {
             'uuid' => $this->getNewUuid(),
             default => throw new RuntimeException(
-                "Model key type [{$this->keyType}] cannot be generated automatically. It must be provided in the model's attributes."
+                "Model key type [{$this->keyType}] cannot be generated automatically."
+                ." It must be provided in the model's attributes."
             ),
         };
     }
