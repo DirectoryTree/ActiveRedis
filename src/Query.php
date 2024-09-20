@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class Builder
+class Query
 {
     /**
      * The where constraints for the query.
@@ -27,6 +27,18 @@ class Builder
     public function find(string $id): ?Model
     {
         return $this->whereKey($id)->first();
+    }
+
+    /**
+     * Find a model by its primary key or throw an exception.
+     */
+    public function findOrFail(string $id): Model
+    {
+        if (! $model = $this->find($id)) {
+            throw (new ModelNotFoundException)->setModel(get_class($this->model));
+        }
+
+        return $model;
     }
 
     /**
@@ -92,6 +104,18 @@ class Builder
     }
 
     /**
+     * Execute the query and get the first result or throw an exception.
+     */
+    public function firstOrFail(): Model
+    {
+        if (! $model = $this->first()) {
+            throw (new ModelNotFoundException)->setModel(get_class($this->model));
+        }
+
+        return $model;
+    }
+
+    /**
      * Get all the models from the cache.
      */
     public function get(): Collection
@@ -101,6 +125,14 @@ class Builder
         $this->each($models->push(...));
 
         return $models;
+    }
+
+    /**
+     * Determine if any models exist for the current query.
+     */
+    public function exists(): bool
+    {
+        return $this->first() !== null;
     }
 
     /**
@@ -119,7 +151,7 @@ class Builder
         foreach ($this->cache->chunk($this->getQueryPattern(), $size) as $hash) {
             $value = $callback($this->model->newInstance([
                 ...$this->cache->getAttributes($hash),
-                $this->model->getKeyName() => $this->getIdFromHash($hash),
+                $this->model->getKeyName() => $this->getKeyValue($hash),
             ], true));
 
             if ($value === false) {
@@ -129,9 +161,9 @@ class Builder
     }
 
     /**
-     * Get the model's primary key from the given hash.
+     * Get the model's primary key value from the given hash.
      */
-    protected function getIdFromHash(string $hash): string
+    protected function getKeyValue(string $hash): string
     {
         return Str::match(sprintf('/%s:([^:]+)/', $this->model->getBaseHash()), $hash);
     }

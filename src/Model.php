@@ -6,6 +6,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
+use RuntimeException;
 
 abstract class Model
 {
@@ -38,6 +39,16 @@ abstract class Model
     public bool $wasRecentlyCreated = false;
 
     /**
+     * The key attribute for the model.
+     */
+    protected string $key = 'id';
+
+    /**
+     * The "type" of key for the model.
+     */
+    protected string $keyType = 'uuid';
+
+    /**
      * The prefix associated with the model.
      */
     protected ?string $prefix = null;
@@ -46,11 +57,6 @@ abstract class Model
      * The attributes that are queryable.
      */
     protected array $queryable = [];
-
-    /**
-     * The primary key for the model.
-     */
-    protected string $primaryKey = 'id';
 
     /**
      * The storage format of the model's date columns.
@@ -144,6 +150,14 @@ abstract class Model
     }
 
     /**
+     * Determine if the model is equal to the given model.
+     */
+    public function is(Model $model): bool
+    {
+        return $this->getModelHash() === $model->getModelHash();
+    }
+
+    /**
      * Set the time-to-live of the model.
      */
     public function setExpiry(CarbonInterface|int $seconds): void
@@ -204,7 +218,7 @@ abstract class Model
 
         $this->newQuery()->insertOrUpdate(
             $this->getModelHash(),
-            $this->getDirty(),
+            Arr::except($this->getDirty(), $this->getKeyName()),
         );
 
         $this->syncChanges();
@@ -220,10 +234,25 @@ abstract class Model
         }
 
         if (! $this->getKey()) {
-            $this->setKey($this->getNewId());
+            $this->setKey($this->getNewKey());
         }
 
-        $this->newQuery()->insertOrUpdate($this->getModelHash(), $this->getAttributes());
+        if (! $key = $this->getKey()) {
+            throw new KeyMissingException('A key is required to insert a new model.');
+        }
+
+        if (str_contains($key, ':')) {
+            throw new InvalidKeyException('A model key cannot contain a colon.');
+        }
+
+        if ($this->newQuery()->find($this->getModelHash())) {
+            throw new DuplicateKeyException("A model with the key [{$key}] already exists.");
+        }
+
+        $this->newQuery()->insertOrUpdate(
+            $this->getModelHash(),
+            Arr::except($this->getAttributes(), $this->getKeyName()),
+        );
 
         $this->wasRecentlyCreated = true;
 
@@ -249,7 +278,7 @@ abstract class Model
     /**
      * Begin querying the model.
      */
-    public static function query(): Builder
+    public static function query(): Query
     {
         return (new static)->newQuery();
     }
@@ -257,7 +286,7 @@ abstract class Model
     /**
      * Begin querying the model.
      */
-    public function newQuery(): Builder
+    public function newQuery(): Query
     {
         return $this->newBuilder();
     }
@@ -265,9 +294,9 @@ abstract class Model
     /**
      * Create a new query builder for the model's table.
      */
-    public function newBuilder(): Builder
+    public function newBuilder(): Query
     {
-        return new Builder($this, app(Repository::class));
+        return new Query($this, app(Repository::class));
     }
 
     /**
@@ -317,17 +346,9 @@ abstract class Model
     }
 
     /**
-     * Get a new unique identifier for the model.
-     */
-    protected function getNewId(): string
-    {
-        return Str::uuid();
-    }
-
-    /**
      * Get the base hash key for the model.
      */
-    protected function getBaseHashWithKey(string $key): string
+    public function getBaseHashWithKey(?string $key): string
     {
         return sprintf('%s:%s', $this->getBaseHash(), $key);
     }
@@ -371,7 +392,28 @@ abstract class Model
      */
     public function getKeyName(): string
     {
-        return $this->primaryKey;
+        return $this->key;
+    }
+
+    /**
+     * Get a new unique key for the model.
+     */
+    protected function getNewKey(): string
+    {
+        return match ($this->keyType) {
+            'uuid' => $this->getNewUuid(),
+            default => throw new RuntimeException(
+                "Model key type [{$this->keyType}] cannot be generated automatically. It must be provided in the model's attributes."
+            ),
+        };
+    }
+
+    /**
+     * Get a new UUID for the model.
+     */
+    protected function getNewUuid(): string
+    {
+        return Str::orderedUuid();
     }
 
     /**

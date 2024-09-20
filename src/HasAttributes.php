@@ -62,7 +62,7 @@ trait HasAttributes
      */
     public function getOriginal(?string $key = null, mixed $default = null): mixed
     {
-        if ($key) {
+        if (func_num_args() > 0) {
             return $this->original[$key] ?? $default;
         }
 

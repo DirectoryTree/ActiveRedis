@@ -6,5 +6,5 @@ use DirectoryTree\ActiveRedis\Model;
 
 class ModelStubWithCustomKey extends Model
 {
-    protected string $primaryKey = 'custom';
+    protected string $key = 'custom';
 }

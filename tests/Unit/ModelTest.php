@@ -13,6 +13,16 @@ it('can be created with attributes', function () {
     expect($model->company)->toBe('Acme');
 });
 
+it('can be filled with attributes', function () {
+    $model = (new ModelStub)->fill([
+        'name' => 'John',
+        'company' => 'Acme',
+    ]);
+
+    expect($model->name)->toBe('John');
+    expect($model->company)->toBe('Acme');
+});
+
 it('can set attributes', function () {
     $model = new ModelStub;
 
@@ -70,12 +80,15 @@ it('does not have dates by default', function () {
 });
 
 it('generates prefix off of class name', function () {
-    $model = new ModelStub;
-
-    expect($model->getPrefix())->toBe('model_stubs');
+    expect((new ModelStub)->getPrefix())->toBe('model_stubs');
 });
 
 it('generates base hash from model key', function () {
+    expect((new ModelStub)->getBaseHash())->toBe('model_stubs:id');
+    expect((new ModelStubWithCustomKey)->getBaseHash())->toBe('model_stub_with_custom_keys:custom');
+});
+
+it('generates original hash from unsaved model', function () {
     expect((new ModelStub)->getBaseHash())->toBe('model_stubs:id');
     expect((new ModelStubWithCustomKey)->getBaseHash())->toBe('model_stub_with_custom_keys:custom');
 });
