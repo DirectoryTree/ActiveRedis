@@ -89,7 +89,6 @@ class RedisRepository implements Repository
      */
     public function deleteAttribute(string $hash, string $field): void
     {
-        // Returns the number of items that were deleted.
         $this->redis->hdel($hash, $field);
     }
 

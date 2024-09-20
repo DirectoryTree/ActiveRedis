@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Redis;
+use DirectoryTree\ActiveRedis\Builder;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
+use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
 
@@ -60,3 +61,7 @@ it('can be found by its primary key', function () {
     expect($found->getKey())->toBe($model->getKey());
 });
 
+it('can create query', function () {
+    expect(ModelStub::query())->toBeInstanceOf(Builder::class);
+    expect((new ModelStub)->newQuery())->toBeInstanceOf(Builder::class);
+});
