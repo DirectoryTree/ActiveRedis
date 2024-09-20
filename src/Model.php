@@ -212,13 +212,24 @@ abstract class Model
             $this->updateTimestamps();
         }
 
+        // If the models key has been changed, we need to delete
+        // the original model from cache and create a new one,
+        // containing all the models current attributes.
         if ($this->isDirty([$this->getKeyName(), ...$this->queryable])) {
-            $this->newQuery()->destroy($this->getOriginalHashPath());
+            $this->newQuery()->destroy($this->getOriginalHash());
+
+            $attributes = Arr::except($this->getAttributes(), $this->getKeyName());
+        }
+        // Otherwise, we can just update the model in cache with the
+        // models dirty attributes, since the existing model will
+        // already have a copy of the all original attributes.
+        else {
+            $attributes = Arr::except($this->getDirty(), $this->getKeyName());
         }
 
         $this->newQuery()->insertOrUpdate(
             $this->getModelHash(),
-            Arr::except($this->getDirty(), $this->getKeyName()),
+            $attributes
         );
 
         $this->syncChanges();
@@ -233,11 +244,11 @@ abstract class Model
             $this->updateTimestamps();
         }
 
-        if (! $this->getKey()) {
+        if (is_null($this->getKey())) {
             $this->setKey($this->getNewKey());
         }
 
-        if (! $key = $this->getKey()) {
+        if (is_null($key = $this->getKey())) {
             throw new KeyMissingException('A key is required to insert a new model.');
         }
 
@@ -245,7 +256,7 @@ abstract class Model
             throw new InvalidKeyException('A model key cannot contain a colon.');
         }
 
-        if ($this->newQuery()->find($this->getModelHash())) {
+        if ($this->newQuery()->find($key)) {
             throw new DuplicateKeyException("A model with the key [{$key}] already exists.");
         }
 
@@ -311,9 +322,9 @@ abstract class Model
     }
 
     /**
-     * Get the original hash path for the model.
+     * Get the original hash for the model.
      */
-    public function getOriginalHashPath(): string
+    public function getOriginalHash(): string
     {
         return implode(':', array_filter([
             $this->getBaseHashWithKey($this->getOriginal($this->getKeyName())),
