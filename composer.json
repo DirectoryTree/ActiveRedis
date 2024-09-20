@@ -1,0 +1,55 @@
+{
+    "name": "directorytree/activeredis",
+    "description": "An ActiveRecord implementation for Redis.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "DirectoryTree\\ActiveRedis\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DirectoryTree\\ActiveRedis\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Steve Bauman",
+            "email": "steven_bauman@outlook.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.1",
+        "illuminate/support": "^11.23",
+        "predis/predis": "^2.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.1",
+        "orchestra/testbench": "^9.4",
+        "pestphp/pest-plugin-laravel": "^3.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ],
+        "lint": [
+            "@php vendor/bin/phpstan analyse --verbose --ansi"
+        ]
+    }
+}

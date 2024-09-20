@@ -1,0 +1,440 @@
+<?php
+
+namespace DirectoryTree\ActiveRedis;
+
+use Carbon\CarbonInterface;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Illuminate\Support\Traits\ForwardsCalls;
+
+abstract class Model
+{
+    use ForwardsCalls;
+    use HasAttributes;
+    use HasTimestamps;
+
+    /**
+     * The name of the "created at" column.
+     *
+     * @var string|null
+     */
+    const CREATED_AT = 'created_at';
+
+    /**
+     * The name of the "updated at" column.
+     *
+     * @var string|null
+     */
+    const UPDATED_AT = 'updated_at';
+
+    /**
+     * Indicates if the model exists.
+     */
+    public bool $exists = false;
+
+    /**
+     * Indicates if the model was inserted during the object's lifecycle.
+     */
+    public bool $wasRecentlyCreated = false;
+
+    /**
+     * The prefix associated with the model.
+     */
+    protected ?string $prefix = null;
+
+    /**
+     * The attributes that are queryable.
+     */
+    protected array $queryable = [];
+
+    /**
+     * The primary key for the model.
+     */
+    protected string $primaryKey = 'id';
+
+    /**
+     * The storage format of the model's date columns.
+     */
+    protected string $dateFormat = 'Y-m-d H:i:s';
+
+    /**
+     * Handle dynamic method calls into the model.
+     */
+    public function __call(string $method, array $parameters): mixed
+    {
+        return $this->forwardCallTo($this->query(), $method, $parameters);
+    }
+
+    /**
+     * Handle dynamic static method calls into the model.
+     */
+    public static function __callStatic(string $method, array $parameters): mixed
+    {
+        return (new static)->$method(...$parameters);
+    }
+
+    /**
+     * Create a new model instance.
+     */
+    public function __construct(array $attributes = [])
+    {
+        $this->fill($attributes);
+    }
+
+    /**
+     * Create a new instance of the given model.
+     */
+    public function newInstance(array $attributes = [], bool $exists = false): static
+    {
+        $model = new static($attributes);
+
+        $model->exists = $exists;
+
+        if ($exists) {
+            $model->syncOriginal();
+        }
+
+        return $model;
+    }
+
+    /**
+     * Reload a fresh model instance from the cache.
+     */
+    public function fresh(): ?static
+    {
+        if (! $this->exists) {
+            return null;
+        }
+
+        return $this->newQuery()->find($this->getKey());
+    }
+
+    /**
+     * Reload the current model instance with fresh attributes from the cache.
+     */
+    public function refresh(): static
+    {
+        if (! $this->exists) {
+            return $this;
+        }
+
+        $this->fill(
+            $this->newQuery()
+                ->find($this->getKey())
+                ->getAttributes()
+        );
+
+        $this->syncOriginal();
+
+        return $this;
+    }
+
+    /**
+     * Fill the model with an array of attributes.
+     */
+    public function fill(array $attributes): static
+    {
+        ksort($attributes);
+
+        foreach ($attributes as $key => $value) {
+            $this->setAttribute($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the time-to-live of the model.
+     */
+    public function setExpiry(CarbonInterface|int $seconds): void
+    {
+        if ($seconds instanceof CarbonInterface) {
+            $seconds = now()->diffInSeconds($seconds);
+        }
+
+        $this->newQuery()->expire($this->getModelHash(), $seconds);
+    }
+
+    /**
+     * Get the time-to-live of the model.
+     */
+    public function getExpiry(): ?CarbonInterface
+    {
+        $expiry = $this->newQuery()->expiry($this->getModelHash());
+
+        return $expiry ? now()->addSeconds($expiry) : null;
+    }
+
+    /**
+     * Update the model with the given attributes.
+     */
+    public function update(array $attributes): void
+    {
+        $this->fill($attributes)->save();
+    }
+
+    /**
+     * Save the model.
+     */
+    public function save(): void
+    {
+        $this->exists
+            ? $this->performUpdate()
+            : $this->performInsert();
+
+        $this->syncOriginal();
+    }
+
+    /**
+     * Perform a model update operation.
+     */
+    protected function performUpdate(): void
+    {
+        if (! $this->isDirty()) {
+            return;
+        }
+
+        if ($this->usesTimestamps()) {
+            $this->updateTimestamps();
+        }
+
+        if ($this->isDirty([$this->getKeyName(), ...$this->queryable])) {
+            $this->newQuery()->destroy($this->getOriginalHashPath());
+        }
+
+        $this->newQuery()->insertOrUpdate(
+            $this->getModelHash(),
+            $this->getDirty(),
+        );
+
+        $this->syncChanges();
+    }
+
+    /**
+     * Perform a model insert operation.
+     */
+    protected function performInsert(): void
+    {
+        if ($this->usesTimestamps()) {
+            $this->updateTimestamps();
+        }
+
+        if (! $this->getKey()) {
+            $this->setKey($this->getNewId());
+        }
+
+        $this->newQuery()->insertOrUpdate($this->getModelHash(), $this->getAttributes());
+
+        $this->wasRecentlyCreated = true;
+
+        $this->syncOriginal();
+
+        $this->exists = true;
+    }
+
+    /**
+     * Delete the model from the cache.
+     */
+    public function delete(): void
+    {
+        if (! $this->exists) {
+            return;
+        }
+
+        $this->newQuery()->destroy($this->getModelHash());
+
+        $this->exists = false;
+    }
+
+    /**
+     * Begin querying the model.
+     */
+    public static function query(): Builder
+    {
+        return (new static)->newQuery();
+    }
+
+    /**
+     * Begin querying the model.
+     */
+    public function newQuery(): Builder
+    {
+        return $this->newBuilder();
+    }
+
+    /**
+     * Create a new query builder for the model's table.
+     */
+    public function newBuilder(): Builder
+    {
+        return new Builder($this, app(Repository::class));
+    }
+
+    /**
+     * Get a hash by the model's primary key and attributes.
+     */
+    public function getModelHash(): string
+    {
+        return implode(':', array_filter([
+            $this->getBaseHashWithKey($this->getKey()),
+            $this->getQueryableHashPath($this->getAttributes()),
+        ]));
+    }
+
+    /**
+     * Get the original hash path for the model.
+     */
+    public function getOriginalHashPath(): string
+    {
+        return implode(':', array_filter([
+            $this->getBaseHashWithKey($this->getOriginal($this->getKeyName())),
+            $this->getQueryableHashPath($this->getOriginal()),
+        ]));
+    }
+
+    /**
+     * Get the queryable attributes for the model.
+     */
+    public function getQueryable(): array
+    {
+        return $this->queryable;
+    }
+
+    /**
+     * Get the base hash key for the model.
+     */
+    public function getBaseHash(): string
+    {
+        return sprintf('%s:%s', $this->getPrefix(), $this->getKeyName());
+    }
+
+    /**
+     * Get the table associated with the model.
+     */
+    public function getPrefix(): string
+    {
+        return $this->prefix ?? Str::plural(Str::snake(class_basename($this)));
+    }
+
+    /**
+     * Get a new unique identifier for the model.
+     */
+    protected function getNewId(): string
+    {
+        return Str::uuid();
+    }
+
+    /**
+     * Get the base hash key for the model.
+     */
+    protected function getBaseHashWithKey(string $key): string
+    {
+        return sprintf('%s:%s', $this->getBaseHash(), $key);
+    }
+
+    /**
+     * Get the hash path for the queryable attributes.
+     */
+    protected function getQueryableHashPath(array $attributes): ?string
+    {
+        $values = Arr::only($attributes, $this->getQueryable());
+
+        ksort($values);
+
+        $key = null;
+
+        foreach ($values as $field => $value) {
+            $key .= sprintf('%s:%s:', $field, $value);
+        }
+
+        return $key ? trim(rtrim($key, ':')) : null;
+    }
+
+    /**
+     * Get the value of the model's primary key.
+     */
+    public function getKey(): ?string
+    {
+        return $this->getAttribute($this->getKeyName());
+    }
+
+    /**
+     * Set the value of the model's primary key.
+     */
+    public function setKey(string $value): void
+    {
+        $this->setAttribute($this->getKeyName(), $value);
+    }
+
+    /**
+     * Get the primary key for the model.
+     */
+    public function getKeyName(): string
+    {
+        return $this->primaryKey;
+    }
+
+    /**
+     * Dynamically retrieve attributes on the model.
+     */
+    public function __get(string $key): mixed
+    {
+        return $this->getAttribute($key);
+    }
+
+    /**
+     * Dynamically set attributes on the model.
+     */
+    public function __set(string $key, mixed $value): void
+    {
+        $this->setAttribute($key, $value);
+    }
+
+    /**
+     * Determine if the given attribute exists.
+     */
+    public function offsetExists(mixed $offset): bool
+    {
+        return ! is_null($this->getAttribute($offset));
+    }
+
+    /**
+     * Get the value for a given offset.
+     */
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->getAttribute($offset);
+    }
+
+    /**
+     * Set the value for a given offset.
+     */
+    public function offsetSet(string $offset, mixed $value): void
+    {
+        $this->setAttribute($offset, $value);
+    }
+
+    /**
+     * Unset the value for a given offset.
+     */
+    public function offsetUnset(string $offset): void
+    {
+        unset($this->attributes[$offset]);
+    }
+
+    /**
+     * Determine if an attribute or relation exists on the model.
+     */
+    public function __isset(string $key): bool
+    {
+        return $this->offsetExists($key);
+    }
+
+    /**
+     * Unset an attribute on the model.
+     */
+    public function __unset(string $key): void
+    {
+        $this->offsetUnset($key);
+    }
+}
