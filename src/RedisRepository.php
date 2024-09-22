@@ -26,14 +26,14 @@ class RedisRepository implements Repository
     /**
      * Chunk through the hashes matching the given pattern.
      */
-    public function chunk(string $pattern, int $size = 100): Generator
+    public function chunk(string $pattern, int $count = 100): Generator
     {
         $cursor = null;
 
         do {
             [$cursor, $keys] = $this->redis->scan($cursor, [
                 'match' => $pattern,
-                'count' => $size,
+                'count' => $count,
             ]);
 
             if (! $keys) {

@@ -72,7 +72,20 @@ class Query
     {
         $wheres = is_string($attribute) ? [$attribute => $value] : $attribute;
 
+        $queryable = [
+            $this->model->getKeyName(),
+            ...$this->model->getQueryable(),
+        ];
+
         foreach ($wheres as $key => $value) {
+            if (! in_array($key, $queryable)) {
+                $model = get_class($this->model);
+
+                throw new AttributeNotQueryableException(
+                    "The attribute [{$key}] is not queryable on the model [{$model}]."
+                );
+            }
+
             $this->wheres[$key] = $value;
         }
 
@@ -148,7 +161,7 @@ class Query
      */
     public function chunk(int $size, Closure $callback): void
     {
-        foreach ($this->cache->chunk($this->getQueryPattern(), $size) as $hash) {
+        foreach ($this->cache->chunk($this->getQuery(), $size) as $hash) {
             $value = $callback($this->model->newInstance([
                 ...$this->cache->getAttributes($hash),
                 $this->model->getKeyName() => $this->getKeyValue($hash),
@@ -171,7 +184,7 @@ class Query
     /**
      * Get the query pattern to execute.
      */
-    protected function getQueryPattern(): string
+    public function getQuery(): string
     {
         $queryable = $this->model->getQueryable();
 
@@ -184,10 +197,10 @@ class Query
         foreach ($attributes as $attribute) {
             $value = $this->wheres[$attribute] ?? '*';
 
-            $pattern .= sprintf('%s:%s', $attribute, $value);
+            $pattern .= sprintf('%s:%s:', $attribute, $value);
         }
 
-        return sprintf('%s:%s', $this->model->getPrefix(), rtrim($pattern, ':'));
+        return sprintf('%s:%s', $this->model->getHashPrefix(), rtrim($pattern, ':'));
     }
 
     /**

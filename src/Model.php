@@ -154,7 +154,7 @@ abstract class Model
      */
     public function is(Model $model): bool
     {
-        return $this->getModelHash() === $model->getModelHash();
+        return $this->getHashKey() === $model->getHashKey();
     }
 
     /**
@@ -166,7 +166,7 @@ abstract class Model
             $seconds = now()->diffInSeconds($seconds);
         }
 
-        $this->newQuery()->expire($this->getModelHash(), $seconds);
+        $this->newQuery()->expire($this->getHashKey(), $seconds);
     }
 
     /**
@@ -174,7 +174,7 @@ abstract class Model
      */
     public function getExpiry(): ?CarbonInterface
     {
-        $expiry = $this->newQuery()->expiry($this->getModelHash());
+        $expiry = $this->newQuery()->expiry($this->getHashKey());
 
         return $expiry ? now()->addSeconds($expiry) : null;
     }
@@ -216,7 +216,7 @@ abstract class Model
         // the original model from cache and create a new one,
         // containing all the models current attributes.
         if ($this->isDirty([$this->getKeyName(), ...$this->queryable])) {
-            $this->newQuery()->destroy($this->getOriginalHash());
+            $this->newQuery()->destroy($this->getOriginalHashKey());
 
             $attributes = Arr::except($this->getAttributes(), $this->getKeyName());
         }
@@ -228,7 +228,7 @@ abstract class Model
         }
 
         $this->newQuery()->insertOrUpdate(
-            $this->getModelHash(),
+            $this->getHashKey(),
             $attributes
         );
 
@@ -261,7 +261,7 @@ abstract class Model
         }
 
         $this->newQuery()->insertOrUpdate(
-            $this->getModelHash(),
+            $this->getHashKey(),
             Arr::except($this->getAttributes(), $this->getKeyName()),
         );
 
@@ -281,7 +281,7 @@ abstract class Model
             return;
         }
 
-        $this->newQuery()->destroy($this->getModelHash());
+        $this->newQuery()->destroy($this->getHashKey());
 
         $this->exists = false;
     }
@@ -311,20 +311,20 @@ abstract class Model
     }
 
     /**
-     * Get a hash by the model's primary key and attributes.
+     * Get the model's hash key.
      */
-    public function getModelHash(): string
+    public function getHashKey(): string
     {
         return implode(':', array_filter([
-            $this->getBaseHashWithKey($this->getKey()),
+            $this->getBaseHashWithKey($this->getKey() ?? 'null'),
             $this->getQueryableHashPath($this->getAttributes()),
         ]));
     }
 
     /**
-     * Get the original hash for the model.
+     * Get the model's original hash key.
      */
-    public function getOriginalHash(): string
+    public function getOriginalHashKey(): string
     {
         return implode(':', array_filter([
             $this->getBaseHashWithKey($this->getOriginal($this->getKeyName())),
@@ -345,13 +345,13 @@ abstract class Model
      */
     public function getBaseHash(): string
     {
-        return sprintf('%s:%s', $this->getPrefix(), $this->getKeyName());
+        return sprintf('%s:%s', $this->getHashPrefix(), $this->getKeyName());
     }
 
     /**
      * Get the table associated with the model.
      */
-    public function getPrefix(): string
+    public function getHashPrefix(): string
     {
         return $this->prefix ?? Str::plural(Str::snake(class_basename($this)));
     }
@@ -369,7 +369,15 @@ abstract class Model
      */
     protected function getQueryableHashPath(array $attributes): ?string
     {
-        $values = Arr::only($attributes, $this->getQueryable());
+        if (empty($queryable = $this->getQueryable())) {
+            return null;
+        }
+
+        $values = [];
+
+        foreach ($queryable as $attribute) {
+            $values[$attribute] = $attributes[$attribute] ?? 'null';
+        }
 
         ksort($values);
 

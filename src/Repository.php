@@ -15,7 +15,7 @@ interface Repository
     /**
      * Chunk through the hashes matching the given pattern.
      */
-    public function chunk(string $pattern, int $size = 100): Generator;
+    public function chunk(string $pattern, int $count = 100): Generator;
 
     /**
      * Set the hash field's value.
