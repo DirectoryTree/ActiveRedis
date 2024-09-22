@@ -6,9 +6,105 @@ use DirectoryTree\ActiveRedis\InvalidKeyException;
 use DirectoryTree\ActiveRedis\ModelNotFoundException;
 use DirectoryTree\ActiveRedis\Query;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
+
+it('can be instantiated with attributes', function () {
+    $model = new ModelStub([
+        'name' => 'John',
+        'company' => 'Acme',
+    ]);
+
+    expect($model->name)->toBe('John');
+    expect($model->company)->toBe('Acme');
+});
+
+it('can be filled with attributes', function () {
+    $model = (new ModelStub)->fill([
+        'name' => 'John',
+        'company' => 'Acme',
+    ]);
+
+    expect($model->name)->toBe('John');
+    expect($model->company)->toBe('Acme');
+});
+
+it('can set attributes', function () {
+    $model = new ModelStub;
+
+    $model->name = 'John';
+
+    $model->setAttribute('company', 'Acme');
+
+    expect($model->name)->toBe('John');
+    expect($model->company)->toBe('Acme');
+});
+
+it('can set all attributes', function () {
+    $model = new ModelStub;
+
+    $model->setAttributes([
+        'name' => 'John',
+        'company' => 'Acme',
+    ]);
+
+    expect($model->name)->toBe('John');
+    expect($model->company)->toBe('Acme');
+});
+
+it('can get dirty attributes', function () {
+    $model = new ModelStub;
+
+    $model->setAttributes([
+        'name' => 'John',
+        'company' => 'Acme',
+    ]);
+
+    expect($model->isDirty())->toBeTrue();
+    expect($model->isDirty('name'))->toBeTrue();
+    expect($model->isDirty(['name', 'company']))->toBeTrue();
+    expect($model->isDirty(['name', 'invalid']))->toBeTrue();
+
+    expect($model->isDirty('invalid'))->toBeFalse();
+    expect($model->isDirty(['foo', 'bar']))->toBeFalse();
+});
+
+it('has date attributes', function () {
+    $model = new ModelStub;
+
+    expect($model->getDates())->toBe([
+        'created_at',
+        'updated_at',
+    ]);
+});
+
+it('does not have dates by default', function () {
+    $model = new ModelStub;
+
+    expect($model->created_at)->toBeNull();
+    expect($model->updated_at)->toBeNull();
+});
+
+it('generates prefix off of class name', function () {
+    expect((new ModelStub)->getHashPrefix())->toBe('model_stubs');
+});
+
+it('generates hash from unsaved model null id', function () {
+    expect((new ModelStub)->getHashKey())->toBe('model_stubs:id:null');
+    expect((new ModelStubWithCustomKey)->getHashKey())->toBe('model_stub_with_custom_keys:custom:null');
+});
+
+it('generates base hash from model key', function () {
+    expect((new ModelStub)->getBaseHash())->toBe('model_stubs:id');
+    expect((new ModelStubWithCustomKey)->getBaseHash())->toBe('model_stub_with_custom_keys:custom');
+});
+
+it('generates original hash from unsaved model', function () {
+    expect((new ModelStub)->getBaseHash())->toBe('model_stubs:id');
+    expect((new ModelStubWithCustomKey)->getBaseHash())->toBe('model_stub_with_custom_keys:custom');
+});
 
 it('can be created without attributes', function () {
     $model = ModelStub::create();
@@ -21,7 +117,7 @@ it('can be created without attributes', function () {
         'id', 'created_at', 'updated_at',
     ]);
 
-    $hash = $model->getModelHash();
+    $hash = $model->getHashKey();
 
     expect($hash)->toBe("model_stubs:id:{$model->id}");
     expect(repository()->exists($hash))->toBeTrue();
@@ -100,7 +196,7 @@ it('can be deleted', function () {
     $model->delete();
 
     expect($model->exists)->toBeFalse();
-    expect(repository()->exists($model->getModelHash()))->toBeFalse();
+    expect(repository()->exists($model->getHashKey()))->toBeFalse();
 });
 
 it('can be found by its key', function () {

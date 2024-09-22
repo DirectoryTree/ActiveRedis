@@ -1,5 +1,7 @@
 <?php
 
+use DirectoryTree\ActiveRedis\Model;
+use DirectoryTree\ActiveRedis\Query;
 use DirectoryTree\ActiveRedis\Repository;
 use DirectoryTree\ActiveRedis\Tests\TestCase;
 
@@ -14,7 +16,7 @@ use DirectoryTree\ActiveRedis\Tests\TestCase;
 |
 */
 
-uses(TestCase::class)->in('Feature');
+uses(TestCase::class)->in(__DIR__);
 
 /*
 |--------------------------------------------------------------------------
@@ -30,4 +32,9 @@ uses(TestCase::class)->in('Feature');
 function repository(): Repository
 {
     return app(Repository::class);
+}
+
+function query(Model $model): Query
+{
+    return new Query($model, repository());
 }
