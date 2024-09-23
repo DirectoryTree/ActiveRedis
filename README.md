@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-An Active Record implementation for Redis in Laravel using hashes.
+An Active Record implementation for Redis hashes in Laravel.
 </p>
 
 <p align="center">
