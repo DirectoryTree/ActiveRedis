@@ -2,8 +2,9 @@
 
 use DirectoryTree\ActiveRedis\Model;
 use DirectoryTree\ActiveRedis\Query;
-use DirectoryTree\ActiveRedis\Repository;
+use DirectoryTree\ActiveRedis\RedisRepository;
 use DirectoryTree\ActiveRedis\Tests\TestCase;
+use Illuminate\Redis\RedisManager;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,12 +30,14 @@ uses(TestCase::class)->in(__DIR__);
 |
 */
 
-function repository(): Repository
-{
-    return app(Repository::class);
-}
-
 function query(Model $model): Query
 {
     return new Query($model, repository());
+}
+
+function repository(): RedisRepository
+{
+    return new RedisRepository(
+        app(RedisManager::class)->connection()
+    );
 }

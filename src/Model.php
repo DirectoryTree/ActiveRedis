@@ -77,6 +77,14 @@ abstract class Model
     }
 
     /**
+     * Get all the models from the cache.
+     */
+    public static function all(): Collection
+    {
+        return static::query()->get();
+    }
+
+    /**
      * Create a new model instance.
      */
     public function __construct(array $attributes = [])
@@ -276,11 +284,21 @@ abstract class Model
     /**
      * Destroy the models for the given IDs.
      */
-    public static function destroy(array|string $ids): void
+    public static function destroy(array|string $ids): int
     {
+        $deleted = 0;
+
         foreach ((array) $ids as $id) {
-            static::find($id)?->delete();
+            if (! $model = static::find($id)) {
+                continue;
+            }
+
+            $model->delete();
+
+            $deleted++;
         }
+
+        return $deleted;
     }
 
     /**
