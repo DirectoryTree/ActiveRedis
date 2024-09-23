@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use UnitEnum;
+use ValueError;
 
 /** @mixin Model */
 trait HasCasts
@@ -141,6 +142,20 @@ trait HasCasts
                 $enumClass, $this->getEnumCaseFromValue($enumClass, $value)
             );
         }
+    }
+
+    /**
+     * Get the storable value from the given enum.
+     */
+    protected function getStorableEnumValue(string $expectedEnum, UnitEnum|BackedEnum $value): string|int
+    {
+        if (! $value instanceof $expectedEnum) {
+            throw new ValueError(sprintf('Value [%s] is not of the expected enum type [%s].', var_export($value, true), $expectedEnum));
+        }
+
+        return $value instanceof BackedEnum
+            ? $value->value
+            : $value->name;
     }
 
     /**
