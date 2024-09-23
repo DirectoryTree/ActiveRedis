@@ -35,7 +35,7 @@ class Query
     public function findOrFail(string $id): Model
     {
         if (! $model = $this->find($id)) {
-            throw (new ModelNotFoundException)->setModel(get_class($this->model));
+            throw (new ModelNotFoundException)->setModel(get_class($this->model), $id);
         }
 
         return $model;

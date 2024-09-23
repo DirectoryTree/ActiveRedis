@@ -19,14 +19,14 @@ abstract class Model
      *
      * @var string|null
      */
-    const CREATED_AT = 'created_at';
+    public const CREATED_AT = 'created_at';
 
     /**
      * The name of the "updated at" column.
      *
      * @var string|null
      */
-    const UPDATED_AT = 'updated_at';
+    public const UPDATED_AT = 'updated_at';
 
     /**
      * Indicates if the model exists.
@@ -248,12 +248,8 @@ abstract class Model
             $this->setKey($this->getNewKey());
         }
 
-        if (is_null($key = $this->getKey())) {
-            throw new KeyMissingException('A key is required to insert a new model.');
-        }
-
-        if (str_contains($key, ':')) {
-            throw new InvalidKeyException('A model key cannot contain a colon.');
+        if (empty(trim($key = $this->getKey()))) {
+            throw new InvalidKeyException('A key is required to create a model.');
         }
 
         if ($this->newQuery()->find($key)) {
@@ -384,7 +380,7 @@ abstract class Model
         $key = null;
 
         foreach ($values as $field => $value) {
-            $key .= sprintf('%s:%s:', $field, $value);
+            $key .= sprintf('%s:%s:', $field, trim($value));
         }
 
         return $key ? trim(rtrim($key, ':')) : null;

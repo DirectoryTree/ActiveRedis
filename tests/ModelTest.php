@@ -135,8 +135,14 @@ it('can be created with attributes', function () {
     expect($model->getAttribute('name'))->toBe('John Doe');
 });
 
-it('throws exception when creating a model with a key containing a colon', function () {
-    ModelStub::create(['id' => 'key:with:colon']);
+it('it generates key when id is null', function () {
+    $model = ModelStub::create(['id' => null]);
+
+    expect($model->id)->not->toBeNull();
+});
+
+it('throws exception when creating a model with an empty key', function () {
+    ModelStub::create(['id' => '']);
 })->throws(InvalidKeyException::class);
 
 it('throws exception when creating a model that already exists', function () {
