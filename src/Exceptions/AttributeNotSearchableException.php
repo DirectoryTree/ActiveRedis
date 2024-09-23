@@ -4,4 +4,4 @@ namespace DirectoryTree\ActiveRedis\Exceptions;
 
 use RuntimeException;
 
-class AttributeNotQueryableException extends RuntimeException {}
+class AttributeNotSearchableException extends RuntimeException {}

@@ -57,9 +57,9 @@ abstract class Model
     protected ?string $prefix = null;
 
     /**
-     * The attributes that are queryable.
+     * The attributes that are searchable.
      */
-    protected array $queryable = [];
+    protected array $searchable = [];
 
     /**
      * The connection name for the model.
@@ -267,7 +267,7 @@ abstract class Model
         // If the models key has been changed, we need to delete
         // the original model from cache and create a new one,
         // containing all the models current attributes.
-        if ($this->isDirty([$this->getKeyName(), ...$this->queryable])) {
+        if ($this->isDirty([$this->getKeyName(), ...$this->searchable])) {
             $this->newQuery()->destroy($this->getOriginalHashKey());
 
             $attributes = Arr::except($this->getAttributes(), $this->getKeyName());
@@ -392,7 +392,7 @@ abstract class Model
     {
         return implode(':', array_filter([
             $this->getBaseHashWithKey($this->getKey() ?? 'null'),
-            $this->getQueryableHashPath($this->getAttributes()),
+            $this->getSearchableHashPath($this->getAttributes()),
         ]));
     }
 
@@ -403,16 +403,16 @@ abstract class Model
     {
         return implode(':', array_filter([
             $this->getBaseHashWithKey($this->getOriginal($this->getKeyName())),
-            $this->getQueryableHashPath($this->getOriginal()),
+            $this->getSearchableHashPath($this->getOriginal()),
         ]));
     }
 
     /**
      * Get the queryable attributes for the model.
      */
-    public function getQueryable(): array
+    public function getSearchable(): array
     {
-        return $this->queryable;
+        return $this->searchable;
     }
 
     /**
@@ -440,17 +440,17 @@ abstract class Model
     }
 
     /**
-     * Get the hash path for the queryable attributes.
+     * Get the hash path for the searchable attributes.
      */
-    protected function getQueryableHashPath(array $attributes): ?string
+    protected function getSearchableHashPath(array $attributes): ?string
     {
-        if (empty($queryable = $this->getQueryable())) {
+        if (empty($searchable = $this->getSearchable())) {
             return null;
         }
 
         $values = [];
 
-        foreach ($queryable as $attribute) {
+        foreach ($searchable as $attribute) {
             $values[$attribute] = $attributes[$attribute] ?? 'null';
         }
 

@@ -3,7 +3,7 @@
 namespace DirectoryTree\ActiveRedis;
 
 use Closure;
-use DirectoryTree\ActiveRedis\Exceptions\AttributeNotQueryableException;
+use DirectoryTree\ActiveRedis\Exceptions\AttributeNotSearchableException;
 use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -74,21 +74,21 @@ class Query
     {
         $wheres = is_string($attribute) ? [$attribute => $value] : $attribute;
 
-        $queryable = [
+        $searchable = [
             $this->model->getKeyName(),
-            ...$this->model->getQueryable(),
+            ...$this->model->getSearchable(),
         ];
 
         foreach ($wheres as $key => $value) {
-            if (! in_array($key, $queryable)) {
+            if (! in_array($key, $searchable)) {
                 $model = get_class($this->model);
 
-                throw new AttributeNotQueryableException(
-                    "The attribute [{$key}] is not queryable on the model [{$model}]."
+                throw new AttributeNotSearchableException(
+                    "The attribute [{$key}] is not searchable on the model [{$model}]."
                 );
             }
 
-            $this->wheres[$key] = $value;
+            $this->wheres[$key] = (string) $value;
         }
 
         return $this;
@@ -97,7 +97,7 @@ class Query
     /**
      * Add a where key clause to the query.
      */
-    public function whereKey(mixed $value): self
+    public function whereKey(string $value): self
     {
         return $this->where($this->model->getKeyName(), $value);
     }
@@ -188,11 +188,11 @@ class Query
      */
     public function getQuery(): string
     {
-        $queryable = $this->model->getQueryable();
+        $searchable = $this->model->getSearchable();
 
-        asort($queryable);
+        asort($searchable);
 
-        $attributes = [$this->model->getKeyName(), ...$queryable];
+        $attributes = [$this->model->getKeyName(), ...$searchable];
 
         $pattern = '';
 
