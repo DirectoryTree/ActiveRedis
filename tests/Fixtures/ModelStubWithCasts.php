@@ -7,6 +7,7 @@ use DirectoryTree\ActiveRedis\Model;
 class ModelStubWithCasts extends Model
 {
     protected array $casts = [
+        'enum' => ModelEnumStub::class,
         'json' => 'json',
         'array' => 'array',
         'date' => 'date',

@@ -2,12 +2,25 @@
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelEnumStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCasts;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
+
+it('casts enum', function () {
+    $model = new ModelStubWithCasts;
+
+    $model->enum = 'one';
+
+    $model->save();
+    $model->refresh();
+
+    expect($model->enum)->toBe(ModelEnumStub::One);
+    expect($model->enum->value)->toBe(ModelEnumStub::One->value);
+});
 
 it('casts json', function () {
     $model = new ModelStubWithCasts;
