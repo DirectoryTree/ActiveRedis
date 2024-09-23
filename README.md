@@ -47,7 +47,8 @@ class Visit extends Model {}
 
 Then, create models with whatever data you'd like:
 
-> [!important] Values you assign to model attributes are always stored as strings in Redis.
+> [!important]
+> Values you assign to model attributes are always stored as strings in Redis.
 
 ```php
 use App\Redis\Visit;
@@ -138,7 +139,8 @@ ActiveRedis will always generate a new UUID in the key's attribute if you do not
 
 To change this behaviour or generate your own unique keys, you may override the `getNewKey()` method:
 
-> [!important] Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
+> [!important]
+> Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
 
 ```php
 namespace App\Redis;
@@ -161,7 +163,8 @@ class Visit extends Model
 
 Models will also maintain `created_at` and `updated_at` attributes:
 
-> [!important] Timestamp attributes will be returned as `Carbon` instances.
+> [!important]
+> Timestamp attributes will be returned as `Carbon` instances.
 
 ```php
 $visit->created_at; // \Carbon\Carbon('2024-01-01 00:00:00')
