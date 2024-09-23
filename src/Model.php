@@ -99,7 +99,7 @@ abstract class Model
     }
 
     /**
-     * Create a new instance of the given model.
+     * Create a new instance of the model.
      */
     public function newInstance(array $attributes = [], bool $exists = false): static
     {
@@ -107,9 +107,17 @@ abstract class Model
 
         $model->exists = $exists;
 
-        if ($exists) {
-            $model->syncOriginal();
-        }
+        return $model;
+    }
+
+    /**
+     * Create a new model instance that is existing.
+     */
+    public function newFromBuilder(array $attributes = []): static
+    {
+        $model = $this->newInstance([], true);
+
+        $model->setRawAttributes($attributes, true);
 
         return $model;
     }
@@ -137,11 +145,11 @@ abstract class Model
             return $this;
         }
 
-        $this->attributes = $this->newQuery()
-            ->findOrFail($this->getKey())
-            ->getAttributes();
+        if (! $model = $this->newQuery()->findOrFail($this->getKey())) {
+            return $this;
+        }
 
-        $this->syncOriginal();
+        $this->setRawAttributes($model->attributes, true);
 
         return $this;
     }

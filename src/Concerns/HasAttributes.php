@@ -97,7 +97,7 @@ trait HasAttributes
             $value = $value ? '1' : '0';
         }
 
-        $this->attributes[$key] = (string) $value;
+        $this->attributes[$key] = $value;
 
         return $this;
     }
@@ -105,7 +105,7 @@ trait HasAttributes
     /**
      * Set the model's attributes.
      */
-    public function setAttributes(array $attributes, bool $sync = false): void
+    public function setRawAttributes(array $attributes, bool $sync = false): void
     {
         $this->attributes = $attributes;
 

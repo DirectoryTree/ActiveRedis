@@ -47,7 +47,7 @@ it('can set attributes', function () {
 it('can set all attributes', function () {
     $model = new ModelStub;
 
-    $model->setAttributes([
+    $model->setRawAttributes([
         'name' => 'John',
         'company' => 'Acme',
     ]);
@@ -59,7 +59,7 @@ it('can set all attributes', function () {
 it('can get dirty attributes', function () {
     $model = new ModelStub;
 
-    $model->setAttributes([
+    $model->setRawAttributes([
         'name' => 'John',
         'company' => 'Acme',
     ]);

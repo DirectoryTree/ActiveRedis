@@ -164,10 +164,10 @@ class Query
     public function chunk(int $size, Closure $callback): void
     {
         foreach ($this->cache->chunk($this->getQuery(), $size) as $hash) {
-            $value = $callback($this->model->newInstance([
+            $value = $callback($this->model->newFromBuilder([
                 ...$this->cache->getAttributes($hash),
                 $this->model->getKeyName() => $this->getKeyValue($hash),
-            ], true));
+            ]));
 
             if ($value === false) {
                 break;
