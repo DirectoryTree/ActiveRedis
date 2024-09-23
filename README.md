@@ -8,9 +8,9 @@ An Active Record implementation for Redis in Laravel using hashes.
 
 <p align="center">
 <a href="https://github.com/directorytree/activeredis/actions" target="_blank"><img src="https://img.shields.io/github/actions/workflow/status/directorytree/activeredis/run-tests.yml?branch=master&style=flat-square"/></a>
-<a href="https://packagist.org/packages/activeredis/bartender" target="_blank"><img src="https://img.shields.io/packagist/v/directorytree/activeredis.svg?style=flat-square"/></a>
-<a href="https://packagist.org/packages/activeredis/bartender" target="_blank"><img src="https://img.shields.io/packagist/dt/directorytree/activeredis.svg?style=flat-square"/></a>
-<a href="https://packagist.org/packages/activeredis/bartender" target="_blank"><img src="https://img.shields.io/packagist/l/directorytree/activeredis.svg?style=flat-square"/></a>
+<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/v/directorytree/activeredis.svg?style=flat-square"/></a>
+<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/dt/directorytree/activeredis.svg?style=flat-square"/></a>
+<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/l/directorytree/activeredis.svg?style=flat-square"/></a>
 </p>
 
 ---
