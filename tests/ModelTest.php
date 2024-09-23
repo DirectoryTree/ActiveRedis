@@ -14,11 +14,13 @@ beforeEach(fn () => Redis::flushall());
 it('can be instantiated with attributes', function () {
     $model = new ModelStub([
         'name' => 'John',
-        'company' => 'Acme',
+        'company_id' => 1,
+        'company_name' => 'Acme',
     ]);
 
     expect($model->name)->toBe('John');
-    expect($model->company)->toBe('Acme');
+    expect($model->company_id)->toBe('1');
+    expect($model->company_name)->toBe('Acme');
 });
 
 it('can be filled with attributes', function () {
@@ -135,15 +137,12 @@ it('can be created with attributes', function () {
     expect($model->getAttribute('name'))->toBe('John Doe');
 });
 
-it('it generates key when id is null', function () {
-    $model = ModelStub::create(['id' => null]);
-
-    expect($model->id)->not->toBeNull();
-});
-
-it('throws exception when creating a model with an empty key', function () {
-    ModelStub::create(['id' => '']);
-})->throws(InvalidKeyException::class);
+it('throws exception when creating a model with an empty key', function (mixed $id) {
+    ModelStub::create(['id' => $id]);
+})->with([
+    '',
+    null,
+])->throws(InvalidKeyException::class);
 
 it('throws exception when creating a model that already exists', function () {
     ModelStub::create(['id' => 'key']);
