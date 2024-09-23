@@ -15,9 +15,7 @@ An Active Record implementation for Redis in Laravel using hashes.
 
 ---
 
-ActiveRedis uses Redis hashes to store and retrieve model data.
-
-This provides a simple and efficient way to interact with Redis in Laravel, as you would with Eloquent models.
+ActiveRedis provides you simple and efficient way to interact with Redis hashes using an Eloquent-like API.
 
 ## Index
 
