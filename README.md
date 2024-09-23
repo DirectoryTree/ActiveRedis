@@ -224,13 +224,157 @@ $visit->save();
 
 ### Deleting Models
 
-You may delete models using the `delete()` method:
+To delete models, use the `delete()` method on the model instance:
 
 ```php
 $visit->delete();
 ```
 
+Or, you may also delete models by their ID:
+
+```php
+$deleted = Visit::destroy('f195637b-7d48-43ab-abab-86e93dfc9410');
+
+echo $deleted; // 1
+```
+
+You may delete multiple models by providing an array of IDs:
+
+```php
+$deleted = Visit::destroy(['f195637b...', 'a195637b...']);
+
+echo $deleted; // 2
+```
+
 ### Expiring Models
+
+To expire models after a certain amount of time, use the `setExpiry()` method:
+
+```php
+$visit->setExpiry(now()->addMinutes(5));
+```
+
+After 5 minutes have elapsed, the model will be automatically deleted from Redis.
+
+### Querying Models
+
+Querying models uses Redis' `SCAN` command to iterate over all keys in the model's hash set.
+
+For example, when the Visit model is queried, the pattern `visits:id:*` is used:
+
+```
+SCAN {cursor} MATCH visits:id:* COUNT {count}
+```
+
+To begin querying models, you may call the `query()` method on the model:
+
+```php
+$visits = Visit::query()->get();
+```
+
+This will iterate over all keys in the model's hash set and return a collection of models matching the pattern.
+
+Missing model methods will be forwarded to the query builder, so you may call query methods dynamically on the model if you prefer.
+
+```php
+$visits = Visit::get();
+```
+
+#### Chunking
+
+You may chunk query results using the `chunk()` method:
+
+```php
+Visit::chunk(100, function ($visits) {
+    $visits->each(function ($visit) {
+        // ...
+    });
+});
+```
+
+Or call the `each` method:
+
+```php
+Visit::each(100, function ($visit) {
+    // ...
+});
+```
+
+You may return `false` in the callback to stop the chunking query:
+
+```php
+Visit::each(function ($visit) {
+    if ($visit->ip === 'xxx.xxx.xxx.xxx') {
+        return false;
+    }
+});
+```
+
+#### Filtering
+
+Before attempting to filter models, you must define which attributes you would like to be queryable on the model:
+
+```php
+class Visit extends Model
+{
+    protected array $queryable = ['ip'];
+}
+```
+
+When you define these attributes, they will be stored as a part of the hash key in the below format:
+
+```
+visits:id:{id}:ip:{ip}
+```
+
+For example:
+
+```
+visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1
+```
+
+When multiple queryable attributes are defined, they will be stored in alphabetical order. For example:
+
+```php
+class Metric extends Model
+{
+    protected array $queryable = ['user_id', 'company_id'];
+}
+
+// ...
+
+$metric = Metric::create([
+    'user_id' => 1,
+    'company_id' => 1,
+]);
+
+$metric->getHashKey(); // "metrics:id:{uuid}:company_id:1:user_id:1"
+```
+
+Once the queryable attributes have been defined, you may begin querying for them using the `where()` method:
+
+```php
+// SCAN ... MATCH visits:id:*:ip:127.0.0.1
+$visit = Visit::where('ip', '127.0.0.1')->first();
+```
+
+You may also use asterisks in your where clauses to perform wildcard searches:
+
+```php
+// SCAN ... MATCH visits:id:*:ip:127.0.*
+$visit = Visit::where('ip', '127.0.*')->first();
+```
 
 ### Retrieving Models
 
+To retrieve models, you may use the `find` method:
+
+```php
+$visit = Visit::find('f195637b-7d48-43ab-abab-86e93dfc9410');
+```
+
+If you would like to throw an exception when the model is not found, you may use the `findOrFail` method:
+
+```php
+Visit::findOrFail('missing'); // ModelNotFoundException
+```
