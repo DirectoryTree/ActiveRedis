@@ -25,6 +25,7 @@ ActiveRedis uses Redis hashes to store and retrieve model data, providing a simp
   - [Creating Models](#creating-models)
     - [Model Identifiers](#model-identifiers)
     - [Model Timestamps](#model-timestamps)
+    - [Model Casts](#model-casts)
   - [Updating Models](#updating-models)
   - [Deleting Models](#deleting-models)
   - [Expiring Models](#expiring-models)
@@ -32,7 +33,6 @@ ActiveRedis uses Redis hashes to store and retrieve model data, providing a simp
     - [Chunking](#chunking)
     - [Filtering](#filtering)
   - [Retrieving Models](#retrieving-models)
-
 ## Requirements
 
 - PHP >= 8.1
@@ -90,6 +90,9 @@ visits:id:f195637b-7d48-43ab-abab-86e93dfc9410
 
 Access attributes as you would expect on the model instance:
 
+> [!important]
+> Attribute values are always stored as strings in Redis. If you want to retain the value's type, use a [model cast](#model-casts).
+
 ```php
 $visit->ip; // xxx.xxx.xxx.xxx
 $visit->url; // https://example.com
@@ -105,7 +108,7 @@ $visit->id; // "f195637b-7d48-43ab-abab-86e93dfc9410"
 $visit->getKey(); // "f195637b-7d48-43ab-abab-86e93dfc9410"
 $visit->getHashKey(); // "visits:id:f195637b-7d48-43ab-abab-86e93dfc9410"
 
-$visit->getKeyName(): // "id"
+$visit->getKeyName(); // "id"
 $visit->getBaseHash(); // "visits:id"
 $visit->getHashPrefix(): // "visits"
 ```
@@ -157,6 +160,8 @@ To change this behaviour or generate your own unique keys, you may override the 
 
 > [!important]
 > Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
+> 
+> This also applies to attributes defined as [queryable](#filtering).
 
 ```php
 namespace App\Redis;
@@ -218,6 +223,63 @@ class Visit extends Model
 {
     const CREATED_AT = 'creation_date';
     const UPDATED_AT = 'updated_date';
+}
+```
+
+#### Model Casts
+
+To cast model attributes to a specific type, you may define a `casts` property on the model:
+
+```php
+class Metric extends Model
+{
+    protected array $casts = [
+        'user_id' => 'integer',
+        'authenticated' => 'boolean',
+    ];
+}
+```
+
+When you access the attribute, it will be cast to the specified type:
+
+```php
+$metric = new Metric([
+    'user_id' => '1',
+    'authenticated' => '1',
+]);
+
+$metric->user_id; // (int) 1
+$metric->authenticated; // (bool) true
+
+$metric->getAttributes(); // ['user_id' => '1', 'authenticated' => '1'],
+```
+
+Here is a list of all supported casts:
+
+- `json`
+- `date`
+- `array`
+- `string`
+- `object`
+- `decimal`
+- `timestamp`
+- `collection`
+- `int|integer`
+- `bool|boolean`
+- `real|float|double`
+- `datetime|custom_datetime`
+- `immutable_date|immutable_custom_datetime|immutable_datetime`
+
+Enum casts are also available:
+
+```php
+use App\Enums\MetricCategory;
+
+class Metric extends Model
+{
+    protected array $casts = [
+        'category' => MetricCategory::class,
+    ];
 }
 ```
 
