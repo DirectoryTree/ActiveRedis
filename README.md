@@ -26,6 +26,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
     - [Model Identifiers](#model-identifiers)
     - [Model Timestamps](#model-timestamps)
     - [Model Casts](#model-casts)
+    - [Model Connection](#model-connection)
   - [Updating Models](#updating-models)
   - [Deleting Models](#deleting-models)
   - [Expiring Models](#expiring-models)
@@ -64,7 +65,8 @@ class Visit extends Model {}
 Then, create models with whatever data you'd like:
 
 > [!important]
-> Values you assign to model attributes are always stored as strings in Redis.
+> Without [casts](#model-casts) defined, all values you assign to model attributes
+> will always be cast to strings, as that is their true type in Redis.
 
 ```php
 use App\Redis\Visit;
@@ -290,6 +292,14 @@ class Visit extends Model
 }
 ```
 
+```php
+$visit = Visit::create(['type' => VisitType::Unique]);
+// Or:
+$visit = Visit::create(['type' => 'unique']);
+
+$visit->type; // (enum) VisitType::Unique
+```
+
 ### Updating Models
 
 You may update models using the `update()` method:
@@ -308,6 +318,19 @@ Or by setting model attributes and calling the `save()` method:
 $visit->ip = 'xxx.xxx.xxx.xxx';
 
 $visit->save();
+```
+
+#### Model Connection
+
+By default, models will use the default Redis connection defined in your Laravel configuration.
+
+To use a different connection, you may override the `connection` property on the model:
+
+```php
+class Visit extends Model
+{
+    protected string $connection = 'visits';
+}
 ```
 
 ### Deleting Models
