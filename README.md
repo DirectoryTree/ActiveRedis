@@ -166,7 +166,7 @@ To change this behaviour or generate your own unique keys, you may override the 
 > [!important]
 > Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
 > 
-> This also applies to attributes defined as [searchable](#filtering).
+> This also applies to attributes defined as [searchable](#searching).
 
 ```php
 namespace App\Redis;
