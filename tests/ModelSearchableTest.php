@@ -63,3 +63,89 @@ it('can query for searchable attributes', function () {
 
     expect($models->count())->toBe(2);
 });
+
+it('can use asterisk as wildcard', function () {
+    // Null Role
+    ModelStubWithSearchable::create(['user_id' => 1, 'company_id' => null]);
+
+    // Company 2
+    ModelStubWithSearchable::create(['user_id' => 1, 'company_id' => 2]);
+    ModelStubWithSearchable::create(['user_id' => 2, 'company_id' => 2]);
+
+    // Company 3
+    ModelStubWithSearchable::create(['user_id' => 1, 'company_id' => 3]);
+    ModelStubWithSearchable::create(['user_id' => 2, 'company_id' => 3]);
+
+    $models = ModelStubWithSearchable::query()->get();
+
+    expect($models->count())->toBe(5);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('user_id', '*')
+        ->where('company_id', '*')
+        ->get();
+
+    expect($models->count())->toBe(5);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('company_id', 'null')
+        ->get();
+
+    expect($models->count())->toBe(1);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('user_id', '*')
+        ->where('company_id', 2)
+        ->get();
+
+    expect($models->count())->toBe(2);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('user_id', 1)
+        ->where('company_id', '*')
+        ->get();
+
+    expect($models->count())->toBe(3);
+});
+
+it('can match portion of searchable attribute', function () {
+    ModelStubWithSearchable::create(['user_id' => 1, 'company_id' => 2]);
+    ModelStubWithSearchable::create(['user_id' => 1, 'company_id' => 212]);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('company_id', '2*')
+        ->get();
+
+    expect($models->count())->toBe(2);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('company_id', '21*')
+        ->get();
+
+    expect($models->count())->toBe(1);
+
+    $models = ModelStubWithSearchable::query()
+        ->where('company_id', '*1*')
+        ->get();
+
+    expect($models->count())->toBe(1);
+});
+
+it('can first or create', function () {
+    $model = ModelStubWithSearchable::firstOrCreate(
+        ['user_id' => 1],
+        ['name' => 'John Doe']
+    );
+
+    expect($model->user_id)->toBe('1');
+    expect($model->name)->toBe('John Doe');
+
+    $retrieved = ModelStubWithSearchable::firstOrCreate(
+        ['user_id' => 1],
+        ['name' => 'Jane Doe']
+    );
+
+    expect($retrieved->is($model))->toBeTrue();
+    expect($retrieved->user_id)->toBe('1');
+    expect($retrieved->name)->toBe('John Doe');
+});

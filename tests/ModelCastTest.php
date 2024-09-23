@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
 
-it('casts json correctly', function () {
+it('casts json', function () {
     $model = new ModelStubWithCasts;
 
     $model->json = [
@@ -25,7 +25,7 @@ it('casts json correctly', function () {
     expect($model->json['age'])->toEqual(30);
 });
 
-it('casts array correctly', function () {
+it('casts array', function () {
     $model = new ModelStubWithCasts;
 
     $model->array = [1, 2, 3];
@@ -37,7 +37,7 @@ it('casts array correctly', function () {
     expect($model->array)->toEqual([1, 2, 3]);
 });
 
-it('casts date correctly', function () {
+it('casts date', function () {
     $model = new ModelStubWithCasts;
 
     $model->date = now()->format('Y-m-d');
@@ -50,7 +50,7 @@ it('casts date correctly', function () {
     expect($model->date)->isSameDay(now());
 });
 
-it('casts string correctly', function () {
+it('casts string', function () {
     $model = new ModelStubWithCasts;
 
     $model->string = 123;
@@ -62,7 +62,7 @@ it('casts string correctly', function () {
     expect($model->string)->toEqual('123');
 });
 
-it('casts object correctly', function () {
+it('casts object', function () {
     $model = new ModelStubWithCasts;
 
     $object = new stdClass;
@@ -80,7 +80,7 @@ it('casts object correctly', function () {
     expect($model->object->age)->toEqual(30);
 });
 
-it('casts decimal correctly', function () {
+it('casts decimal', function () {
     $model = new ModelStubWithCasts;
 
     $model->decimal = 123.456789;
@@ -92,7 +92,7 @@ it('casts decimal correctly', function () {
     expect($model->decimal)->toEqual('123.46');
 });
 
-it('casts timestamp correctly', function () {
+it('casts timestamp', function () {
     $model = new ModelStubWithCasts;
 
     $model->timestamp = Date::now()->timestamp;
@@ -104,7 +104,7 @@ it('casts timestamp correctly', function () {
     expect($model->timestamp)->toEqual(Date::now()->getTimestamp());
 });
 
-it('casts collection correctly', function () {
+it('casts collection', function () {
     $model = new ModelStubWithCasts;
 
     $model->collection = new Collection([1, 2, 3]);
@@ -116,7 +116,7 @@ it('casts collection correctly', function () {
     expect($model->collection)->toEqual(collect([1, 2, 3]));
 });
 
-it('casts integer correctly', function () {
+it('casts integer', function () {
     $model = new ModelStubWithCasts;
 
     $model->integer = 123;
@@ -128,7 +128,7 @@ it('casts integer correctly', function () {
     expect($model->integer)->toEqual(123);
 });
 
-it('casts boolean correctly', function () {
+it('casts boolean', function () {
     $model = new ModelStubWithCasts;
 
     $model->save();
@@ -144,7 +144,7 @@ it('casts boolean correctly', function () {
     expect($model->boolean)->toBeFalse();
 });
 
-it('casts float correctly', function () {
+it('casts float', function () {
     $model = new ModelStubWithCasts;
 
     $model->float = '123.45';
@@ -156,7 +156,7 @@ it('casts float correctly', function () {
     expect($model->float)->toEqual(123.45);
 });
 
-it('casts datetime correctly', function () {
+it('casts datetime', function () {
     $model = new ModelStubWithCasts;
 
     $model->datetime = '2024-09-24 15:30:00';
@@ -168,7 +168,7 @@ it('casts datetime correctly', function () {
     expect($model->datetime)->toEqual(Carbon::parse('2024-09-24 15:30:00'));
 });
 
-it('casts custom_datetime correctly', function () {
+it('casts custom_datetime', function () {
     $model = new ModelStubWithCasts;
 
     $model->custom_datetime = '2024-09-24';
@@ -180,7 +180,7 @@ it('casts custom_datetime correctly', function () {
     expect($model->custom_datetime)->toEqual(Carbon::parse('2024-09-24 00:00:00'));
 });
 
-it('casts immutable_date correctly', function () {
+it('casts immutable_date', function () {
     $model = new ModelStubWithCasts;
 
     $model->immutable_date = '2024-09-24';
@@ -192,7 +192,7 @@ it('casts immutable_date correctly', function () {
     expect($model->immutable_date)->toEqual(CarbonImmutable::parse('2024-09-24 00:00:00'));
 });
 
-it('casts immutable_datetime correctly', function () {
+it('casts immutable_datetime', function () {
     $model = new ModelStubWithCasts;
 
     $model->immutable_datetime = '2024-09-24 15:30:00';

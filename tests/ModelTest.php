@@ -142,12 +142,12 @@ it('throws exception when creating a model with an empty key', function (mixed $
 })->with([
     '',
     null,
-])->throws(InvalidKeyException::class);
+])->throws(InvalidKeyException::class, 'A key is required to create a model.');
 
 it('throws exception when creating a model that already exists', function () {
     ModelStub::create(['id' => 'key']);
     ModelStub::create(['id' => 'key']);
-})->throws(DuplicateKeyException::class);
+})->throws(DuplicateKeyException::class, 'A model with the key [key] already exists.');
 
 it('can be updated', function () {
     $model = ModelStub::create([
@@ -222,11 +222,11 @@ it('does not throw exception when finding by existent key', function () {
 
 it('throws exception when finding by non-existent key', function () {
     ModelStub::findOrFail('invalid');
-})->throws(ModelNotFoundException::class);
+})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub] invalid');
 
 it('throws exception when retrieving first of an empty query', function () {
     ModelStub::query()->firstOrFail();
-})->throws(ModelNotFoundException::class);
+})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub].');
 
 it('can create query', function () {
     expect(ModelStub::query())->toBeInstanceOf(Query::class);
