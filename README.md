@@ -23,10 +23,14 @@ ActiveRedis uses Redis hashes to store and retrieve model data, providing a simp
 - [Installation](#installation)
 - [Usage](#usage)
   - [Creating Models](#creating-models)
+    - [Model Identifiers](#model-identifiers)
+    - [Model Timestamps](#model-timestamps)
   - [Updating Models](#updating-models)
   - [Deleting Models](#deleting-models)
   - [Expiring Models](#expiring-models)
   - [Querying Models](#querying-models)
+    - [Chunking](#chunking)
+    - [Filtering](#filtering)
   - [Retrieving Models](#retrieving-models)
 
 ## Requirements
