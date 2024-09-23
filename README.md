@@ -15,7 +15,9 @@ An Active Record implementation for Redis in Laravel using hashes.
 
 ---
 
-ActiveRedis uses Redis hashes to store and retrieve model data, providing a simple and efficient way to interact with Redis in Laravel.
+ActiveRedis uses Redis hashes to store and retrieve model data.
+
+This provides a simple and efficient way to interact with Redis in Laravel, as you would with Eloquent models.
 
 ## Index
 
@@ -31,7 +33,7 @@ ActiveRedis uses Redis hashes to store and retrieve model data, providing a simp
   - [Expiring Models](#expiring-models)
   - [Querying Models](#querying-models)
     - [Chunking](#chunking)
-    - [Filtering](#filtering)
+    - [Searching](#searching)
   - [Retrieving Models](#retrieving-models)
 ## Requirements
 
@@ -115,6 +117,9 @@ $visit->getHashPrefix(): // "visits"
 
 You may provide your own ID if you'd prefer:
 
+> [!important]
+> Redis keys are **case-sensitive**. Be mindful of this, as it impacts queries, discussed below.
+
 ```php
 $visit = Visit::create([
     'id' => 'custom-id',
@@ -161,7 +166,7 @@ To change this behaviour or generate your own unique keys, you may override the 
 > [!important]
 > Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
 > 
-> This also applies to attributes defined as [queryable](#filtering).
+> This also applies to attributes defined as [searchable](#filtering).
 
 ```php
 namespace App\Redis;
@@ -231,7 +236,7 @@ class Visit extends Model
 To cast model attributes to a specific type, you may define a `casts` property on the model:
 
 ```php
-class Metric extends Model
+class Visit extends Model
 {
     protected array $casts = [
         'user_id' => 'integer',
@@ -243,15 +248,16 @@ class Metric extends Model
 When you access the attribute, it will be cast to the specified type:
 
 ```php
-$metric = new Metric([
+$visit = new Visit([
     'user_id' => '1',
     'authenticated' => '1',
+    // ...
 ]);
 
-$metric->user_id; // (int) 1
-$metric->authenticated; // (bool) true
+$visit->user_id; // (int) 1
+$visit->authenticated; // (bool) true
 
-$metric->getAttributes(); // ['user_id' => '1', 'authenticated' => '1'],
+$visit->getAttributes(); // ['user_id' => '1', 'authenticated' => '1'],
 ```
 
 Here is a list of all supported casts:
@@ -273,12 +279,12 @@ Here is a list of all supported casts:
 Enum casts are also available:
 
 ```php
-use App\Enums\MetricCategory;
+use App\Enums\VisitType;
 
-class Metric extends Model
+class Visit extends Model
 {
     protected array $casts = [
-        'category' => MetricCategory::class,
+        'type' => VisitType::class,
     ];
 }
 ```
@@ -337,6 +343,15 @@ $visit->setExpiry(now()->addMinutes(5));
 
 After 5 minutes have elapsed, the model will be automatically deleted from Redis.
 
+To retrieve a model's expiry time, use the `getExpiry()` method:
+
+> [!important]
+> The value returned will be a `Carbon` instance, or `null` if the model does not expire.
+
+```php
+$visit->getExpiry(); // \Carbon\Carbon|null
+```
+
 ### Querying Models
 
 Querying models uses Redis' `SCAN` command to iterate over all keys in the model's hash set.
@@ -391,16 +406,21 @@ Visit::each(function ($visit) {
 });
 ```
 
-#### Filtering
+#### Searching
 
-Before attempting to filter models, you must define which attributes you would like to be queryable on the model:
+Before attempting to search models, you must define which attributes you would like to be searchable on the model:
 
 ```php
 class Visit extends Model
 {
-    protected array $queryable = ['ip'];
+    protected array $searchable = ['ip'];
 }
 ```
+
+> [!important]
+> Consider searchable attributes to be part of your model schema. Do not 
+> change these while you have existing records. Doing so will lead 
+> to models that cannot be retrieved.
 
 When you define these attributes, they will be stored as a part of the hash key in the below format:
 
@@ -414,25 +434,42 @@ For example:
 visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1
 ```
 
-When multiple queryable attributes are defined, they will be stored in alphabetical order. For example:
+If you do not provide a value for a searchable attribute, literal string `null` will be used as the value in the key:
 
-```php
-class Metric extends Model
-{
-    protected array $queryable = ['user_id', 'company_id'];
-}
-
-// ...
-
-$metric = Metric::create([
-    'user_id' => 1,
-    'company_id' => 1,
-]);
-
-$metric->getHashKey(); // "metrics:id:{uuid}:company_id:1:user_id:1"
+```
+visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:null
 ```
 
-Once the queryable attributes have been defined, you may begin querying for them using the `where()` method:
+When multiple searchable attributes are defined, they will be stored in alphabetical order from left to right in the hash key:
+
+```php
+class Visit extends Model
+{
+    protected array $searchable = ['user_id', 'ip'];
+}
+```
+
+For example:
+
+```
+visits:id:{id}:ip:{ip}:user_id:{user_id}
+```
+
+```php
+$visit = Visit::create([
+    'user_id' => 1,
+    'ip' => request()->ip(),
+]);
+
+$visit->getHashKey(); // "visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:1"
+```
+
+Once the searchable attributes have been defined, you may begin querying for them using the `where()` method:
+
+```php
+// SCAN ... MATCH visits:id:*:company_id:1:user_id:1
+$visits = Visit::where('user_id', 1)->where('company_id', 1)->get();
+```
 
 ```php
 // SCAN ... MATCH visits:id:*:ip:127.0.0.1
