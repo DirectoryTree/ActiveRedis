@@ -17,6 +17,18 @@ An Active Record implementation for Redis in Laravel using hashes.
 
 ActiveRedis uses Redis hashes to store and retrieve model data, providing a simple and efficient way to interact with Redis in Laravel.
 
+## Index
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Creating Models](#creating-models)
+  - [Updating Models](#updating-models)
+  - [Deleting Models](#deleting-models)
+  - [Expiring Models](#expiring-models)
+  - [Querying Models](#querying-models)
+  - [Retrieving Models](#retrieving-models)
+
 ## Requirements
 
 - PHP >= 8.1
@@ -161,7 +173,7 @@ class Visit extends Model
 
 Models will also maintain `created_at` and `updated_at` attributes:
 
-> [!important] Timestamp attributes will be returned as `Carbon` instances.
+> [!important] Timestamp attributes will be returned as `Carbon` instances when accessed.
 
 ```php
 $visit->created_at; // \Carbon\Carbon('2024-01-01 00:00:00')
