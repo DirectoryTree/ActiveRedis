@@ -65,8 +65,8 @@ class Visit extends Model {}
 Then, create models with whatever data you'd like:
 
 > [!important]
-> Without [model casts](#model-casts) defined, all values you assign to model 
-> attributes will be cast to strings, as that is their storage type in Redis.
+> Without [model casts](#model-casts) defined, all values you assign to model attributes
+> will be cast to strings, as that is their true storage type in Redis.
 
 ```php
 use App\Redis\Visit;
