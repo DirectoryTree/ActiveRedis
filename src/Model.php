@@ -3,6 +3,9 @@
 namespace DirectoryTree\ActiveRedis;
 
 use Carbon\CarbonInterface;
+use DirectoryTree\ActiveRedis\Concerns\HasAttributes;
+use DirectoryTree\ActiveRedis\Concerns\HasCasts;
+use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
@@ -14,6 +17,7 @@ abstract class Model
 {
     use ForwardsCalls;
     use HasAttributes;
+    use HasCasts;
     use HasTimestamps;
 
     /**
@@ -117,7 +121,9 @@ abstract class Model
             return null;
         }
 
-        return $this->newQuery()->find($this->getKey());
+        return $this->newQuery()->find(
+            $this->getKey()
+        );
     }
 
     /**
@@ -129,11 +135,9 @@ abstract class Model
             return $this;
         }
 
-        $this->fill(
-            $this->newQuery()
-                ->find($this->getKey())
-                ->getAttributes()
-        );
+        $this->attributes = $this->newQuery()
+            ->findOrFail($this->getKey())
+            ->getAttributes();
 
         $this->syncOriginal();
 

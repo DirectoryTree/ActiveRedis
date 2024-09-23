@@ -1,13 +1,9 @@
 <?php
 
-namespace DirectoryTree\ActiveRedis;
+namespace DirectoryTree\ActiveRedis\Concerns;
 
-use Carbon\CarbonInterface;
-use DateTimeInterface;
+use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Date;
-use InvalidArgumentException;
 
 /** @mixin Model */
 trait HasAttributes
@@ -47,6 +43,10 @@ trait HasAttributes
     {
         $value = $this->attributes[$key] ?? null;
 
+        if ($this->hasCast($key)) {
+            return $this->castAttribute($key, $value);
+        }
+
         if ($value !== null && in_array($key, $this->getDates())) {
             return $this->asDateTime($value);
         }
@@ -83,7 +83,21 @@ trait HasAttributes
             $value = $this->fromDateTime($value);
         }
 
-        $this->attributes[$key] = $value;
+        if ($this->isEnumCastable($key)) {
+            $this->setEnumCastableAttribute($key, $value);
+
+            return $this;
+        }
+
+        if (! is_null($value) && $this->isJsonCastable($key)) {
+            $value = $this->castAttributeAsJson($key, $value);
+        }
+
+        if (! is_null($value) && $this->isBooleanCastable($key)) {
+            $value = $value ? '1' : '0';
+        }
+
+        $this->attributes[$key] = (string) $value;
 
         return $this;
     }
@@ -188,62 +202,24 @@ trait HasAttributes
             return true;
         } elseif (is_null($attribute)) {
             return false;
-        } elseif ($this->isDateAttribute($key)) {
-            return $this->fromDateTime($attribute) === $this->fromDateTime($original);
+        } elseif ($this->isDateAttribute($key) || $this->isDateCastableWithCustomFormat($key)) {
+            return $this->fromDateTime($attribute) ===
+                $this->fromDateTime($original);
+        } elseif ($this->hasCast($key, ['object', 'collection'])) {
+            return $this->fromJson($attribute) ===
+                $this->fromJson($original);
+        } elseif ($this->hasCast($key, ['real', 'float', 'double'])) {
+            if ($original === null) {
+                return false;
+            }
+
+            return abs($this->castAttribute($key, $attribute) - $this->castAttribute($key, $original)) < PHP_FLOAT_EPSILON * 4;
+        } elseif ($this->hasCast($key)) {
+            return $this->castAttribute($key, $attribute) === $this->castAttribute($key, $original);
         }
 
         return is_numeric($attribute) && is_numeric($original)
             && strcmp((string) $attribute, (string) $original) === 0;
-    }
-
-    /**
-     * Return a timestamp as DateTime object with time set to 00:00:00.
-     */
-    protected function asDate(mixed $value): Carbon
-    {
-        return $this->asDateTime($value)->startOfDay();
-    }
-
-    /**
-     * Return a timestamp as DateTime object.
-     */
-    protected function asDateTime(mixed $value): Carbon
-    {
-        if ($value instanceof CarbonInterface) {
-            return Date::instance($value);
-        }
-
-        if ($value instanceof DateTimeInterface) {
-            return Date::parse(
-                $value->format('Y-m-d H:i:s.u'), $value->getTimezone()
-            );
-        }
-
-        if (is_numeric($value)) {
-            return Date::createFromTimestamp($value, date_default_timezone_get());
-        }
-
-        if ($this->isStandardDateFormat($value)) {
-            return Date::instance(Carbon::createFromFormat('Y-m-d', $value)->startOfDay());
-        }
-
-        $format = $this->getDateFormat();
-
-        try {
-            $date = Date::createFromFormat($format, $value);
-        } catch (InvalidArgumentException) {
-            $date = false;
-        }
-
-        return $date ?: Date::parse($value);
-    }
-
-    /**
-     * Determine if the given value is a standard date format.
-     */
-    protected function isStandardDateFormat(string $value): bool
-    {
-        return preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $value);
     }
 
     /**
@@ -252,16 +228,6 @@ trait HasAttributes
     protected function isDateAttribute(string $key): bool
     {
         return in_array($key, $this->getDates(), true);
-    }
-
-    /**
-     * Convert a DateTime to a storable string.
-     */
-    protected function fromDateTime(mixed $value): ?string
-    {
-        return empty($value) ? $value : $this->asDateTime($value)->format(
-            $this->getDateFormat()
-        );
     }
 
     /**
@@ -281,13 +247,5 @@ trait HasAttributes
             $this->getCreatedAtColumn(),
             $this->getUpdatedAtColumn(),
         ] : [];
-    }
-
-    /**
-     * Return a timestamp as unix timestamp.
-     */
-    protected function asTimestamp(mixed $value): int
-    {
-        return $this->asDateTime($value)->getTimestamp();
     }
 }

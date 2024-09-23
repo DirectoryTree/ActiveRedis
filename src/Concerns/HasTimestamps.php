@@ -1,8 +1,9 @@
 <?php
 
-namespace DirectoryTree\ActiveRedis;
+namespace DirectoryTree\ActiveRedis\Concerns;
 
 use Carbon\CarbonInterface;
+use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Facades\Date;
 
 /** @mixin Model */
