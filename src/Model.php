@@ -459,7 +459,9 @@ abstract class Model
         $values = [];
 
         foreach ($searchable as $attribute) {
-            $values[$attribute] = $attributes[$attribute] ?? 'null';
+            $value = $attributes[$attribute] ?? '';
+
+            $values[$attribute] = trim($value) ?: 'null';
         }
 
         ksort($values);
@@ -467,7 +469,7 @@ abstract class Model
         $key = null;
 
         foreach ($values as $field => $value) {
-            $key .= sprintf('%s:%s:', $field, trim($value));
+            $key .= sprintf('%s:%s:', $field, $value);
         }
 
         return $key ? trim(rtrim($key, ':')) : null;
