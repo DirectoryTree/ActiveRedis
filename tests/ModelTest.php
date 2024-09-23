@@ -232,3 +232,40 @@ it('can create query', function () {
     expect(ModelStub::query())->toBeInstanceOf(Query::class);
     expect((new ModelStub)->newQuery())->toBeInstanceOf(Query::class);
 });
+
+it('can be refreshed', function () {
+    $model = ModelStub::create();
+
+    $model->name = 'John Doe';
+
+    $model->save();
+
+    $model->refresh();
+
+    expect($model->name)->toBe('John Doe');
+});
+
+it('can be refreshed with custom key', function () {
+    $model = ModelStubWithCustomKey::create(['custom' => 'foo']);
+
+    $model->custom = 'bar';
+
+    $model->save();
+
+    $model->refresh();
+
+    expect($model->custom)->toBe('bar');
+});
+
+it('can be re-retrieved with fresh', function () {
+    $model = ModelStub::create();
+
+    $model->name = 'John Doe';
+
+    $model->save();
+
+    $fresh = $model->fresh();
+
+    expect($fresh->is($model))->toBeTrue();
+    expect($fresh->name)->toBe('John Doe');
+});
