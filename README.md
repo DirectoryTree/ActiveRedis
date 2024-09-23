@@ -264,17 +264,20 @@ Here is a list of all supported casts:
 
 - `json`
 - `date`
+- `real`
 - `array`
+- `float`
 - `string`
 - `object`
-- `decimal`
+- `double`
+- `integer`
+- `boolean`
+- `datetime`
 - `timestamp`
 - `collection`
-- `int|integer`
-- `bool|boolean`
-- `real|float|double`
-- `datetime|custom_datetime`
-- `immutable_date|immutable_custom_datetime|immutable_datetime`
+- `immutable_date`
+- `immutable_datetime`
+- `decimal:<precision>`
 
 Enum casts are also available:
 
