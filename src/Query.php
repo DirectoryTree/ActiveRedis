@@ -133,7 +133,7 @@ class Query
      */
     public function get(): Collection
     {
-        $models = Collection::make();
+        $models = $this->model->newCollection();
 
         $this->each($models->push(...));
 

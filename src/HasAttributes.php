@@ -28,6 +28,11 @@ trait HasAttributes
     protected array $changes = [];
 
     /**
+     * The storage format of the model's date columns.
+     */
+    protected string $dateFormat = 'Y-m-d H:i:s';
+
+    /**
      * Get the model's attributes.
      */
     public function getAttributes(): array
