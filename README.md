@@ -418,9 +418,9 @@ class Visit extends Model
 ```
 
 > [!important]
-> Consider searchable attributes to be part of your model schema. Do not 
-> change these while you have existing records. Doing so will lead 
-> to models that cannot be retrieved.
+> Consider searchable attributes to be part of your model schema. They should be defined before 
+> you begin using your model. **Do not change these while you have existing records**. Doing 
+> so will lead to models that cannot be retrieved without interacting with Redis manually.
 
 When you define these attributes, they will be stored as a part of the hash key in the below format:
 
