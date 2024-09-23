@@ -1,6 +1,6 @@
 <?php
 
-namespace DirectoryTree\ActiveRedis;
+namespace DirectoryTree\ActiveRedis\Exceptions;
 
 use RuntimeException;
 

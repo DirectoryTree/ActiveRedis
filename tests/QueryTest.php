@@ -1,6 +1,6 @@
 <?php
 
-use DirectoryTree\ActiveRedis\AttributeNotQueryableException;
+use DirectoryTree\ActiveRedis\Exceptions\AttributeNotQueryableException;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithQueryable;

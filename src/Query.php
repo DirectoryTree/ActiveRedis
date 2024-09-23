@@ -3,6 +3,8 @@
 namespace DirectoryTree\ActiveRedis;
 
 use Closure;
+use DirectoryTree\ActiveRedis\Exceptions\AttributeNotQueryableException;
+use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 

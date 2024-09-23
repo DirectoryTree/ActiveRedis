@@ -1,9 +1,9 @@
 <?php
 
 use Carbon\Carbon;
-use DirectoryTree\ActiveRedis\DuplicateKeyException;
-use DirectoryTree\ActiveRedis\InvalidKeyException;
-use DirectoryTree\ActiveRedis\ModelNotFoundException;
+use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
+use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
+use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use DirectoryTree\ActiveRedis\Query;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;

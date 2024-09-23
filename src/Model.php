@@ -6,6 +6,8 @@ use Carbon\CarbonInterface;
 use DirectoryTree\ActiveRedis\Concerns\HasAttributes;
 use DirectoryTree\ActiveRedis\Concerns\HasCasts;
 use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
+use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
+use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;

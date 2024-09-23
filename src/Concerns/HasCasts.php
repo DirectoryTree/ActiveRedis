@@ -8,6 +8,7 @@ use Brick\Math\Exception\MathException as BrickMathException;
 use Brick\Math\RoundingMode;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
+use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
 use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -248,6 +249,22 @@ trait HasCasts
     }
 
     /**
+     * Cast the given attribute to JSON.
+     */
+    protected function castAttributeAsJson(string $key, mixed $value): string
+    {
+        $value = $this->asJson($value);
+
+        if ($value === false) {
+            throw JsonEncodingException::forAttribute(
+                $this, $key, json_last_error_msg()
+            );
+        }
+
+        return $value;
+    }
+
+    /**
      * Return a decimal as string.
      */
     protected function asDecimal(float|string $value, int $decimals): string
@@ -262,7 +279,7 @@ trait HasCasts
     /**
      * Encode the given value as JSON.
      */
-    protected function asJson(mixed $value): string
+    protected function asJson(mixed $value): string|false
     {
         return json_encode($value);
     }
