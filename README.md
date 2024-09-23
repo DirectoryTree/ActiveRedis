@@ -33,7 +33,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
   - [Querying Models](#querying-models)
     - [Chunking](#chunking)
     - [Searching](#searching)
-  - [Retrieving Models](#retrieving-models)
+
 ## Requirements
 
 - PHP >= 8.1
@@ -65,8 +65,8 @@ class Visit extends Model {}
 Then, create models with whatever data you'd like:
 
 > [!important]
-> Without [casts](#model-casts) defined, all values you assign to model attributes
-> will always be cast to strings, as that is their true type in Redis.
+> Without [model casts](#model-casts) defined, all values you assign to model 
+> attributes will be cast to strings, as that is their storage type in Redis.
 
 ```php
 use App\Redis\Visit;
@@ -92,14 +92,14 @@ visits:id:f195637b-7d48-43ab-abab-86e93dfc9410
 
 Access attributes as you would expect on the model instance:
 
-> [!important]
-> Attribute values are always stored as strings in Redis. If you want to retain the value's type, use a [model cast](#model-casts).
-
 ```php
 $visit->ip; // xxx.xxx.xxx.xxx
 $visit->url; // https://example.com
 $visit->user_agent; // Mozilla/5.0 ...
 ```
+
+> [!important]
+> Before you begin using your model in production, consider possible [searchable attributes](#searching) to be part of your model schema.
 
 #### Model Identifiers
 
@@ -400,6 +400,20 @@ Missing model methods will be forwarded to the query builder, so you may call qu
 $visits = Visit::get();
 ```
 
+#### Finding
+
+To retrieve specific models, you may use the `find` method:
+
+```php
+$visit = Visit::find('f195637b-7d48-43ab-abab-86e93dfc9410');
+```
+
+If you would like to throw an exception when the model is not found, you may use the `findOrFail` method:
+
+```php
+Visit::findOrFail('missing'); // ModelNotFoundException
+```
+
 #### Chunking
 
 You may chunk query results using the `chunk()` method:
@@ -507,16 +521,13 @@ You may also use asterisks in your where clauses to perform wildcard searches:
 $visit = Visit::where('ip', '127.0.*')->first();
 ```
 
-### Retrieving Models
-
-To retrieve models, you may use the `find` method:
-
-```php
-$visit = Visit::find('f195637b-7d48-43ab-abab-86e93dfc9410');
-```
-
-If you would like to throw an exception when the model is not found, you may use the `findOrFail` method:
+Searchable attributes may be changed at any time on models. If they are changed, the 
+existing model instance is deleted in Redis, and a new one is saved automatically:
 
 ```php
-Visit::findOrFail('missing'); // ModelNotFoundException
+$visit = Visit::create(['user_id' => 1]);
+
+// HDEL visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:user_id:1
+// HSET visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:user_id:2
+$visit->update(['user_id' => 2]);
 ```
