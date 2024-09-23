@@ -108,13 +108,13 @@ it('casts decimal', function () {
 it('casts timestamp', function () {
     $model = new ModelStubWithCasts;
 
-    $model->timestamp = Date::now()->timestamp;
+    $model->timestamp = $timestamp = Date::now()->timestamp;
 
     $model->save();
     $model->refresh();
 
     expect($model->timestamp)->toBeInt();
-    expect($model->timestamp)->toEqual(Date::now()->getTimestamp());
+    expect($model->timestamp)->toEqual($timestamp);
 });
 
 it('casts collection', function () {
