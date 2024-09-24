@@ -154,6 +154,9 @@ it('can be updated', function () {
         'name' => 'John Doe',
     ]);
 
+    // Simulate a minute passing.
+    Carbon::setTestNow(now()->addMinute());
+
     $model->name = 'Jane Doe';
 
     expect($model->getOriginal('name'))->toBe('John Doe');
@@ -164,6 +167,7 @@ it('can be updated', function () {
     expect($model->getChanges())->toHaveKey('name');
     expect($model->getChanges()['name'])->toBe('Jane Doe');
     expect($model->getOriginal('name'))->toBe('Jane Doe');
+    expect($model->updated_at->toString())->not->toBe($model->created_at->toString());
 });
 
 it('can update key', function () {
@@ -179,6 +183,7 @@ it('can update key', function () {
 it('can be touched', function () {
     $model = ModelStub::create();
 
+    // Simulate a minute passing.
     Carbon::setTestNow(now()->addMinute());
 
     $model->touch();
