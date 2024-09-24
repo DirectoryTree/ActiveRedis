@@ -418,8 +418,15 @@ Visit::findOrFail('missing'); // ModelNotFoundException
 
 You may chunk query results using the `chunk()` method:
 
+> [!important]
+> Redis does not guarantee the exact number of records returned in each SCAN iteration.
+> See https://redis.io/docs/latest/commands/scan/#the-count-option for more information.
+
 ```php
-Visit::chunk(100, function ($visits) {
+use App\Redis\Visit;
+use Illuminate\Support\Collection;
+
+Visit::chunk(100, function (Collection $visits) {
     $visits->each(function ($visit) {
         // ...
     });
@@ -429,7 +436,9 @@ Visit::chunk(100, function ($visits) {
 Or call the `each` method:
 
 ```php
-Visit::each(100, function ($visit) {
+use App\Redis\Visit;
+
+Visit::each(100, function (Visit $visit) {
     // ...
 });
 ```
@@ -437,7 +446,9 @@ Visit::each(100, function ($visit) {
 You may return `false` in the callback to stop the chunking query:
 
 ```php
-Visit::each(function ($visit) {
+use App\Redis\Visit;
+
+Visit::each(function (Visit $visit) {
     if ($visit->ip === 'xxx.xxx.xxx.xxx') {
         return false;
     }
@@ -449,6 +460,8 @@ Visit::each(function ($visit) {
 Before attempting to search models, you must define which attributes you would like to be searchable on the model:
 
 ```php
+namespace App\Redis;
+
 class Visit extends Model
 {
     protected array $searchable = ['ip'];
