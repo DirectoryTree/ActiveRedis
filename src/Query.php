@@ -157,7 +157,7 @@ class Query
      */
     public function each(Closure $callback, int $count = 100): void
     {
-        $this->chunk($count, function (array $models) use ($callback) {
+        $this->chunk($count, function (Collection $models) use ($callback) {
             foreach ($models as $key => $model) {
                 if ($callback($model, $key) === false) {
                     return false;
@@ -172,10 +172,14 @@ class Query
     public function chunk(int $count, Closure $callback): void
     {
         foreach ($this->cache->chunk($this->getQuery(), $count) as $chunk) {
-            $models = array_map(fn (string $hash) => $this->model->newFromBuilder([
-                ...$this->cache->getAttributes($hash),
-                $this->model->getKeyName() => $this->getKeyValue($hash),
-            ]), $chunk);
+            $models = $this->model->newCollection();
+
+            foreach ($chunk as $hash) {
+                $models->add($this->model->newFromBuilder([
+                    ...$this->cache->getAttributes($hash),
+                    $this->model->getKeyName() => $this->getKeyValue($hash),
+                ]));
+            }
 
             if ($callback($models) === false) {
                 return;
