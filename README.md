@@ -501,7 +501,7 @@ class Visit extends Model
 }
 ```
 
-> [!note]
+> [!tip]
 > Because searchable attributes should not be modified while you have existing records, you may find it 
 > useful name your models in a way that references the searchable attributes. For example `UserVisit`.
 
