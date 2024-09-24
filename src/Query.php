@@ -137,7 +137,9 @@ class Query
     {
         $models = $this->model->newCollection();
 
-        $this->each($models->push(...));
+        $this->each(
+            fn (Model $model) => $models->add($model)
+        );
 
         return $models;
     }
@@ -153,24 +155,30 @@ class Query
     /**
      * Execute a callback over each item.
      */
-    public function each(Closure $callback, int $size = 100): void
+    public function each(Closure $callback, int $count = 100): void
     {
-        $this->chunk($size, $callback);
+        $this->chunk($count, function (array $models) use ($callback) {
+            foreach ($models as $key => $model) {
+                if ($callback($model, $key) === false) {
+                    return false;
+                }
+            }
+        });
     }
 
     /**
      * Chunk the results of the query.
      */
-    public function chunk(int $size, Closure $callback): void
+    public function chunk(int $count, Closure $callback): void
     {
-        foreach ($this->cache->chunk($this->getQuery(), $size) as $hash) {
-            $value = $callback($this->model->newFromBuilder([
+        foreach ($this->cache->chunk($this->getQuery(), $count) as $chunk) {
+            $models = array_map(fn (string $hash) => $this->model->newFromBuilder([
                 ...$this->cache->getAttributes($hash),
                 $this->model->getKeyName() => $this->getKeyValue($hash),
-            ]));
+            ]), $chunk);
 
-            if ($value === false) {
-                break;
+            if ($callback($models) === false) {
+                return;
             }
         }
     }
