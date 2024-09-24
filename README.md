@@ -329,7 +329,7 @@ To use a different connection, you may override the `connection` property on the
 ```php
 class Visit extends Model
 {
-    protected string $connection = 'visits';
+    protected ?string $connection = 'visits';
 }
 ```
 
