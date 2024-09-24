@@ -232,7 +232,7 @@ it('throws exception when finding by non-existent key', function () {
 })->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub] invalid');
 
 it('throws exception when retrieving first of an empty query', function () {
-    ModelStub::query()->firstOrFail();
+    ModelStub::firstOrFail();
 })->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub].');
 
 it('can create query', function () {
@@ -277,6 +277,14 @@ it('can be created with custom prefix', function () {
 
     expect($model->getPrefix())->toBe('foo_bar');
     expect($model->getHashKey())->toBe("foo_bar:id:{$model->id}");
+});
+
+it('can be retrieved with first', function () {
+    $model = ModelStub::create();
+
+    $found = ModelStub::first();
+
+    expect($found->is($model))->toBeTrue();
 });
 
 it('can be re-retrieved with fresh', function () {
