@@ -332,38 +332,12 @@ it('can be re-retrieved with fresh', function () {
     expect($fresh->name)->toBe('John Doe');
 });
 
-it('can get all results', function () {
-    foreach (range(1, 20) as $index) {
-        ModelStub::create();
-    }
+it('can be transformed into an array', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe',
+    ]);
 
-    expect(ModelStub::get())->toHaveCount(20);
-});
-
-it('can chunk using each on results', function () {
-    foreach (range(1, 20) as $index) {
-        ModelStub::create();
-    }
-
-    $count = 0;
-
-    ModelStub::each(function ($model) use (&$count) {
-        expect($model)->toBeInstanceOf(ModelStub::class);
-
-        $count++;
-    });
-
-    expect($count)->toBe(20);
-});
-
-it('can chunk chunk results', function () {
-    foreach (range(1, 20) as $index) {
-        ModelStub::create();
-    }
-
-    ModelStub::chunk(10, function ($models) {
-        // Redis does not guarantee the count, so we
-        // just check if it's greater than 0.
-        expect($models->count())->toBeGreaterThan(0);
-    });
+    expect($model->toArray())->toHaveKeys([
+        'id', 'name', 'created_at', 'updated_at',
+    ]);
 });

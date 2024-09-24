@@ -2,6 +2,7 @@
 
 namespace DirectoryTree\ActiveRedis;
 
+use ArrayAccess;
 use Carbon\CarbonInterface;
 use DirectoryTree\ActiveRedis\Concerns\HasAttributes;
 use DirectoryTree\ActiveRedis\Concerns\HasCasts;
@@ -11,6 +12,7 @@ use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 
-abstract class Model
+abstract class Model implements Arrayable, ArrayAccess
 {
     use ForwardsCalls;
     use HasAttributes;
@@ -511,6 +513,14 @@ abstract class Model
     }
 
     /**
+     * Get the instance as an array.
+     */
+    public function toArray(): array
+    {
+        return $this->getAttributes();
+    }
+
+    /**
      * Dynamically retrieve attributes on the model.
      */
     public function __get(string $key): mixed
@@ -545,7 +555,7 @@ abstract class Model
     /**
      * Set the value for a given offset.
      */
-    public function offsetSet(string $offset, mixed $value): void
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->setAttribute($offset, $value);
     }
@@ -553,7 +563,7 @@ abstract class Model
     /**
      * Unset the value for a given offset.
      */
-    public function offsetUnset(string $offset): void
+    public function offsetUnset(mixed $offset): void
     {
         unset($this->attributes[$offset]);
     }
