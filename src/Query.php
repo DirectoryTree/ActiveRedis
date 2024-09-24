@@ -69,6 +69,20 @@ class Query
     }
 
     /**
+     * Update a model or create a new one.
+     */
+    public function updateOrCreate(array $attributes, array $values = []): Model
+    {
+        if (! is_null($instance = (clone $this)->where($attributes)->first())) {
+            $instance->fill($values)->save();
+
+            return $instance;
+        }
+
+        return $this->create($attributes + $values);
+    }
+
+    /**
      * Add a where clause to the query.
      */
     public function where(array|string $attribute, mixed $value = null): self

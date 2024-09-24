@@ -153,6 +153,24 @@ it('can be first or created with id', function () {
     expect($found->wasRecentlyCreated)->toBeFalse();
 });
 
+it('can be updated or created with id', function () {
+    $model = ModelStub::updateOrCreate([
+        'id' => 'foo-bar',
+    ], [
+        'name' => 'John Doe',
+    ]);
+
+    $found = ModelStub::updateOrCreate([
+        'id' => 'foo-bar',
+    ], [
+        'name' => 'Jane Doe',
+    ]);
+
+    expect($model->is($found))->toBeTrue();
+    expect($model->name)->toBe('John Doe');
+    expect($found->name)->toBe('Jane Doe');
+});
+
 it('throws exception when creating a model with an empty key', function (mixed $id) {
     ModelStub::create(['id' => $id]);
 })->with([
