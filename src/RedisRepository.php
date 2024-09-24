@@ -26,7 +26,7 @@ class RedisRepository implements Repository
     /**
      * Chunk through the hashes matching the given pattern.
      */
-    public function chunk(string $pattern, int $count = 100): Generator
+    public function chunk(string $pattern, int $count): Generator
     {
         $cursor = null;
 
@@ -40,9 +40,7 @@ class RedisRepository implements Repository
                 break;
             }
 
-            foreach ($keys as $key) {
-                yield $key;
-            }
+            yield $keys;
         } while ($cursor !== '0');
     }
 
