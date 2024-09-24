@@ -99,7 +99,8 @@ $visit->user_agent; // Mozilla/5.0 ...
 ```
 
 > [!important]
-> Before you begin using your model in production, consider possible [searchable attributes](#searching) to be part of your model schema.
+> Before you begin using your model in production, consider possible [searchable attributes](#searching) that
+> you may like to be part of your model schema, as these should not be modified once you have existing records.
 
 #### Model Identifiers
 
