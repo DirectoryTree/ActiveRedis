@@ -131,7 +131,7 @@ it('can match portion of searchable attribute', function () {
     expect($models->count())->toBe(1);
 });
 
-it('can first or create', function () {
+it('can first or create with searchable attribute', function () {
     $model = ModelStubWithSearchable::firstOrCreate(
         ['user_id' => 1],
         ['name' => 'John Doe']
