@@ -346,7 +346,7 @@ abstract class Model
     }
 
     /**
-     * Create a new query builder for the model's table.
+     * Create a new query builder for the model's prefix.
      */
     public function newBuilder(): Query
     {
@@ -432,7 +432,7 @@ abstract class Model
     }
 
     /**
-     * Get the table associated with the model.
+     * Get the hash prefix associated with the model.
      */
     public function getHashPrefix(): string
     {
