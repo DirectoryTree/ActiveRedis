@@ -275,7 +275,7 @@ it('can be expired', function () {
 it('can be created with custom prefix', function () {
     $model = ModelStubWithCustomPrefix::create();
 
-    expect($model->getPrefix())->toBe('foo_bar');
+    expect($model->getHashPrefix())->toBe('foo_bar');
     expect($model->getHashKey())->toBe("foo_bar:id:{$model->id}");
 });
 
