@@ -248,6 +248,7 @@ it('can be found by its key', function () {
 
     $found = ModelStub::find($model->getKey());
 
+    expect($found->is($model))->toBeTrue();
     expect($found->getKey())->toBe($model->getKey());
 });
 
