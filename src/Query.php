@@ -5,6 +5,7 @@ namespace DirectoryTree\ActiveRedis;
 use Closure;
 use DirectoryTree\ActiveRedis\Exceptions\AttributeNotSearchableException;
 use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
+use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 

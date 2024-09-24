@@ -8,6 +8,8 @@ use DirectoryTree\ActiveRedis\Concerns\HasCasts;
 use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
+use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
+use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;

@@ -2,7 +2,7 @@
 
 use DirectoryTree\ActiveRedis\Model;
 use DirectoryTree\ActiveRedis\Query;
-use DirectoryTree\ActiveRedis\RedisRepository;
+use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Tests\TestCase;
 use Illuminate\Redis\RedisManager;
 
