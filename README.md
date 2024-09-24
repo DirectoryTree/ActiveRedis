@@ -501,15 +501,15 @@ class Visit extends Model
 }
 ```
 
-> [!tip]
-> Because searchable attributes should not be modified while you have existing records, you may find it 
-> useful name your models in a way that references the searchable attributes. For example `UserVisit`.
-
 For example:
 
 ```
 visits:id:{id}:ip:{ip}:user_id:{user_id}
 ```
+
+> [!tip]
+> Because searchable attributes should not be modified while you have existing records, you may find it 
+> useful name your models in a way that references the searchable attributes. For example `UserVisit`.
 
 ```php
 $visit = Visit::create([
