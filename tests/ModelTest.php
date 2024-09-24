@@ -7,6 +7,7 @@ use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use DirectoryTree\ActiveRedis\Query;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
+use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomPrefix;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
@@ -260,6 +261,13 @@ it('can be refreshed with custom key', function () {
     $model->refresh();
 
     expect($model->custom)->toBe('bar');
+});
+
+it('can be created with custom prefix', function () {
+    $model = ModelStubWithCustomPrefix::create();
+
+    expect($model->getPrefix())->toBe('foo_bar');
+    expect($model->getHashKey())->toBe("foo_bar:id:{$model->id}");
 });
 
 it('can be re-retrieved with fresh', function () {
