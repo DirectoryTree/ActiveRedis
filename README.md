@@ -81,7 +81,7 @@ $visit = Visit::create([
 This will create a new Redis hash in below format:
 
 ```
-{plural_model_name}:{key_attribute}:{key_value}
+{plural_model_name}:{key_name}:{key_value}
 ```
 
 For example:
