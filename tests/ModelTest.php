@@ -8,6 +8,7 @@ use DirectoryTree\ActiveRedis\Query;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomPrefix;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());
@@ -156,7 +157,7 @@ it('can be updated', function () {
     ]);
 
     // Simulate a minute passing.
-    Carbon::setTestNow(now()->addMinute());
+    Carbon::setTestNow(Date::now()->addMinute());
 
     $model->name = 'Jane Doe';
 
@@ -185,7 +186,7 @@ it('can be touched', function () {
     $model = ModelStub::create();
 
     // Simulate a minute passing.
-    Carbon::setTestNow(now()->addMinute());
+    Carbon::setTestNow(Date::now()->addMinute());
 
     $model->touch();
 
@@ -261,6 +262,14 @@ it('can be refreshed with custom key', function () {
     $model->refresh();
 
     expect($model->custom)->toBe('bar');
+});
+
+it('can be expired', function () {
+    $model = ModelStub::create();
+
+    $model->setExpiry(10);
+
+    expect(Date::now()->diffInSeconds($model->getExpiry()))->toBeGreaterThanOrEqual(9);
 });
 
 it('can be created with custom prefix', function () {

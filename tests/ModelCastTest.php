@@ -53,14 +53,14 @@ it('casts array', function () {
 it('casts date', function () {
     $model = new ModelStubWithCasts;
 
-    $model->date = now()->format('Y-m-d');
+    $model->date = Date::now()->format('Y-m-d');
 
     $model->save();
     $model->refresh();
 
     expect($model->date)->toBeInstanceOf(Carbon::class);
     expect($model->date)->toEqual(Date::today());
-    expect($model->date)->isSameDay(now());
+    expect($model->date)->isSameDay(Date::now());
 });
 
 it('casts string', function () {

@@ -12,6 +12,7 @@ use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 
@@ -190,7 +191,7 @@ abstract class Model
     public function setExpiry(CarbonInterface|int $seconds): void
     {
         if ($seconds instanceof CarbonInterface) {
-            $seconds = now()->diffInSeconds($seconds);
+            $seconds = Date::now()->diffInSeconds($seconds);
         }
 
         $this->newQuery()->expire($this->getHashKey(), $seconds);
@@ -203,7 +204,7 @@ abstract class Model
     {
         $expiry = $this->newQuery()->expiry($this->getHashKey());
 
-        return $expiry ? now()->addSeconds($expiry) : null;
+        return $expiry ? Date::now()->addSeconds($expiry) : null;
     }
 
     /**
