@@ -481,7 +481,7 @@ abstract class Model implements Arrayable, ArrayAccess
     }
 
     /**
-     * Get the value of the model's primary key.
+     * Get the value of the model's key.
      */
     public function getKey(): ?string
     {
@@ -489,7 +489,7 @@ abstract class Model implements Arrayable, ArrayAccess
     }
 
     /**
-     * Set the value of the model's primary key.
+     * Set the value of the model's key.
      */
     public function setKey(string $value): void
     {
@@ -497,7 +497,7 @@ abstract class Model implements Arrayable, ArrayAccess
     }
 
     /**
-     * Get the primary key for the model.
+     * Get the key for the model.
      */
     public function getKeyName(): string
     {

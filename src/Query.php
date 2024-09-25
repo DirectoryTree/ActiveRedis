@@ -25,17 +25,21 @@ class Query
     ) {}
 
     /**
-     * Find a model by its primary key.
+     * Find a model by its key.
      */
-    public function find(string $id): ?Model
+    public function find(?string $id): ?Model
     {
-        return $this->whereKey($id)->first();
+        if (! is_null($id)) {
+            return $this->whereKey($id)->first();
+        }
+
+        return null;
     }
 
     /**
-     * Find a model by its primary key or throw an exception.
+     * Find a model by its  key or throw an exception.
      */
-    public function findOrFail(string $id): Model
+    public function findOrFail(?string $id): Model
     {
         if (! $model = $this->find($id)) {
             throw (new ModelNotFoundException)->setModel(get_class($this->model), $id);
@@ -112,7 +116,7 @@ class Query
     /**
      * Add a where key clause to the query.
      */
-    public function whereKey(string $value): self
+    public function whereKey(?string $value): self
     {
         return $this->where($this->model->getKeyName(), $value);
     }
@@ -203,7 +207,7 @@ class Query
     }
 
     /**
-     * Get the model's primary key value from the given hash.
+     * Get the model key's value from the given hash.
      */
     protected function getKeyValue(string $hash): string
     {
