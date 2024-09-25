@@ -523,29 +523,41 @@ $visit->getHashKey(); // "visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.
 Once the searchable attributes have been defined, you may begin querying for them using the `where()` method:
 
 ```php
-// SCAN ... MATCH visits:id:*:company_id:1:user_id:1
-$visits = Visit::where('user_id', 1)->where('company_id', 1)->get();
+// SCAN ... MATCH visits:id:*:ip:127.0.0.1:user_id:1
+$visits = Visit::query()
+    ->where('user_id', 1)
+    ->where('ip', '127.0.0.1')
+    ->get();
 ```
 
+You may omit searchable attributes from the query and an asterisk will be inserted automatically:
+
 ```php
-// SCAN ... MATCH visits:id:*:ip:127.0.0.1
+// SCAN ... MATCH visits:id:*:ip:127.0.0.1:user_id:*
 $visit = Visit::where('ip', '127.0.0.1')->first();
 ```
 
 You may also use asterisks in your where clauses to perform wildcard searches:
 
 ```php
-// SCAN ... MATCH visits:id:*:ip:127.0.*
+// SCAN ... MATCH visits:id:*:ip:127.0.*:user_id:*
 $visit = Visit::where('ip', '127.0.*')->first();
 ```
 
-Searchable attributes may be changed at any time on models. If they are changed, the 
-existing model instance is deleted in Redis, and a new one is saved automatically:
+You may also use a string literal `'null'` as a search value to query for models where the attribute is `null`:
+
+```php
+// SCAN ... MATCH visits:id:*:ip:null:user_id:*
+$visit = Visit::where('ip', 'null')->first();
+```
+
+Searchable attribute values may be updated at any time on models. If they have been changed, 
+the existing model instance is deleted in Redis, and a new one is saved automatically:
 
 ```php
 $visit = Visit::create(['user_id' => 1]);
 
-// HDEL visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:user_id:1
-// HSET visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:user_id:2
+// HDEL visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:1
+// HSET visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:2
 $visit->update(['user_id' => 2]);
 ```
