@@ -165,9 +165,9 @@ ActiveRedis will always generate a new UUID in the key's attribute if you do not
 To change this behaviour or generate your own unique keys, you may override the `getNewKey()` method:
 
 > [!important]
-> Do not generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
+> **Do not** generate keys with colons (:) or asterisks (*). They are reserved characters in Redis.
 > 
-> This also applies to attributes defined as [searchable](#searching).
+> This also applies to values of [searchable](#searching) attributes.
 
 ```php
 namespace App\Redis;
