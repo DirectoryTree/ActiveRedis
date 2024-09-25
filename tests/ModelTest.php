@@ -5,6 +5,7 @@ use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
+use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithSearchable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;
 
@@ -167,6 +168,34 @@ it('can be updated or created with id', function () {
     expect($model->name)->toBe('John Doe');
     expect($found->name)->toBe('Jane Doe');
 });
+
+it('can be updated or created with searchable attributes', function () {
+    $model = ModelStubWithSearchable::updateOrCreate([
+        'user_id' => 1,
+        'company_id' => 2,
+    ]);
+
+    $found = ModelStubWithSearchable::updateOrCreate([
+        'user_id' => 1,
+        'company_id' => 2,
+    ]);
+
+    expect($model->is($found))->toBeTrue();
+});
+
+it('throws exception when update or creating with previous null searchable attribute in values to existing', function () {
+    ModelStubWithSearchable::updateOrCreate([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => 2,
+    ]);
+
+    ModelStubWithSearchable::updateOrCreate([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => null,
+    ], ['company_id' => 2]);
+})->throws(DuplicateKeyException::class, 'A model with the key [foo] already exists.');
 
 it('throws exception when creating a model with an empty key', function (mixed $id) {
     ModelStub::create(['id' => $id]);
