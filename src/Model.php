@@ -4,8 +4,10 @@ namespace DirectoryTree\ActiveRedis;
 
 use ArrayAccess;
 use Carbon\CarbonInterface;
+use DirectoryTree\ActiveRedis\Concerns\Bootable;
 use DirectoryTree\ActiveRedis\Concerns\HasAttributes;
 use DirectoryTree\ActiveRedis\Concerns\HasCasts;
+use DirectoryTree\ActiveRedis\Concerns\HasEvents;
 use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
@@ -22,9 +24,11 @@ use Illuminate\Support\Traits\ForwardsCalls;
 
 abstract class Model implements Arrayable, ArrayAccess
 {
+    use Bootable;
     use ForwardsCalls;
     use HasAttributes;
     use HasCasts;
+    use HasEvents;
     use HasTimestamps;
 
     /**
@@ -100,6 +104,8 @@ abstract class Model implements Arrayable, ArrayAccess
      */
     public function __construct(array $attributes = [])
     {
+        $this->bootIfNotBooted();
+
         $this->fill($attributes);
     }
 
@@ -123,6 +129,8 @@ abstract class Model implements Arrayable, ArrayAccess
         $model = $this->newInstance([], true);
 
         $model->setRawAttributes($attributes, true);
+
+        $model->fireModelEvent('retrieved', false);
 
         return $model;
     }
@@ -224,24 +232,36 @@ abstract class Model implements Arrayable, ArrayAccess
      */
     public function save(): void
     {
-        $this->exists
+        if ($this->fireModelEvent('saving') === false) {
+            return;
+        }
+
+        $saved = $this->exists
             ? $this->performUpdate()
             : $this->performInsert();
 
-        $this->syncOriginal();
+        if ($saved) {
+            $this->syncOriginal();
+
+            $this->fireModelEvent('saved', false);
+        }
     }
 
     /**
      * Perform a model insert operation.
      */
-    protected function performInsert(): void
+    protected function performInsert(): bool
     {
-        if ($this->usesTimestamps()) {
-            $this->updateTimestamps();
-        }
-
         if (is_null($this->getKey())) {
             $this->setKey($this->getNewKey());
+        }
+
+        if ($this->fireModelEvent('creating') === false) {
+            return false;
+        }
+
+        if ($this->usesTimestamps()) {
+            $this->updateTimestamps();
         }
 
         if (empty(trim($key = $this->getKey()))) {
@@ -257,20 +277,28 @@ abstract class Model implements Arrayable, ArrayAccess
             Arr::except($this->getAttributes(), $this->getKeyName()),
         );
 
-        $this->wasRecentlyCreated = true;
-
         $this->syncOriginal();
 
         $this->exists = true;
+
+        $this->wasRecentlyCreated = true;
+
+        $this->fireModelEvent('created', false);
+
+        return true;
     }
 
     /**
      * Perform a model update operation.
      */
-    protected function performUpdate(): void
+    protected function performUpdate(): bool
     {
+        if ($this->fireModelEvent('updating') === false) {
+            return false;
+        }
+
         if (! $this->isDirty()) {
-            return;
+            return false;
         }
 
         if ($this->usesTimestamps()) {
@@ -298,6 +326,10 @@ abstract class Model implements Arrayable, ArrayAccess
         );
 
         $this->syncChanges();
+
+        $this->fireModelEvent('updated', false);
+
+        return true;
     }
 
     /**
@@ -329,9 +361,15 @@ abstract class Model implements Arrayable, ArrayAccess
             return;
         }
 
+        if ($this->fireModelEvent('deleting') === false) {
+            return;
+        }
+
         $this->newQuery()->destroy($this->getHashKey());
 
         $this->exists = false;
+
+        $this->fireModelEvent('deleted', false);
     }
 
     /**

@@ -13,6 +13,13 @@
             "DirectoryTree\\ActiveRedis\\Tests\\": "tests/"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DirectoryTree\\ActiveRedis\\ActiveRedisServiceProvider"
+            ]
+        }
+    },
     "authors": [
         {
             "name": "Steve Bauman",

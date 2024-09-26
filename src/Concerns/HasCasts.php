@@ -9,7 +9,6 @@ use Brick\Math\RoundingMode;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
 use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
-use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Exceptions\MathException;
@@ -19,7 +18,7 @@ use InvalidArgumentException;
 use UnitEnum;
 use ValueError;
 
-/** @mixin Model */
+/** @mixin \DirectoryTree\ActiveRedis\Model */
 trait HasCasts
 {
     /**

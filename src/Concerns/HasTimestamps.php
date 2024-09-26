@@ -3,10 +3,9 @@
 namespace DirectoryTree\ActiveRedis\Concerns;
 
 use Carbon\CarbonInterface;
-use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Facades\Date;
 
-/** @mixin Model */
+/** @mixin \DirectoryTree\ActiveRedis\Model */
 trait HasTimestamps
 {
     /**

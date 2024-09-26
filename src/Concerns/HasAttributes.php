@@ -2,10 +2,9 @@
 
 namespace DirectoryTree\ActiveRedis\Concerns;
 
-use DirectoryTree\ActiveRedis\Model;
 use Illuminate\Support\Arr;
 
-/** @mixin Model */
+/** @mixin \DirectoryTree\ActiveRedis\Model */
 trait HasAttributes
 {
     /**
