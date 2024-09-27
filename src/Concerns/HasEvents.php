@@ -4,6 +4,8 @@ namespace DirectoryTree\ActiveRedis\Concerns;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Events\NullDispatcher;
+use Illuminate\Support\Arr;
+use InvalidArgumentException;
 
 /** @mixin \DirectoryTree\ActiveRedis\Model */
 trait HasEvents
@@ -58,14 +60,16 @@ trait HasEvents
     }
 
     /**
-     * Register a model event listener with the dispatcher.
+     * Remove all the event listeners for the model.
      */
-    protected static function registerModelEvent(string $event, mixed $callback): void
+    public static function flushEventListeners(): void
     {
-        if (isset(static::$dispatcher)) {
-            $name = static::class;
+        if (! isset(static::$dispatcher)) {
+            return;
+        }
 
-            static::$dispatcher->listen("redis.model.{$event}: {$name}", $callback);
+        foreach ((new static)->getObservableEvents() as $event) {
+            static::$dispatcher->forget("redis.model.{$event}: ".static::class);
         }
     }
 
@@ -147,6 +151,74 @@ trait HasEvents
     public static function deleted(mixed $callback): void
     {
         static::registerModelEvent('deleted', $callback);
+    }
+
+    /**
+     * Register observers with the model.
+     */
+    public static function observe(object|array|string $classes): void
+    {
+        $instance = new static;
+
+        foreach (Arr::wrap($classes) as $class) {
+            $instance->registerObserver($class);
+        }
+    }
+
+    /**
+     * Register a model event listener with the dispatcher.
+     */
+    protected static function registerModelEvent(string $event, mixed $callback): void
+    {
+        if (isset(static::$dispatcher)) {
+            $name = static::class;
+
+            static::$dispatcher->listen("redis.model.{$event}: {$name}", $callback);
+        }
+    }
+
+    /**
+     * Get the observable event names.
+     */
+    public function getObservableEvents(): array
+    {
+        return [
+            'retrieved', 'creating', 'created', 'updating', 'updated',
+            'saving', 'saved', 'deleting', 'deleted',
+        ];
+    }
+
+    /**
+     * Register a single observer with the model.
+     */
+    protected function registerObserver(object|string $class): void
+    {
+        $className = $this->resolveObserverClassName($class);
+
+        // When registering a model observer, we will spin through the
+        // possible events and determine if this observer has that
+        // method. If it does, we will register it with the model.
+        foreach ($this->getObservableEvents() as $event) {
+            if (method_exists($class, $event)) {
+                static::registerModelEvent($event, $className.'@'.$event);
+            }
+        }
+    }
+
+    /**
+     * Resolve the observer's class name from an object or string.
+     */
+    protected function resolveObserverClassName(object|string $class): string
+    {
+        if (is_object($class)) {
+            return get_class($class);
+        }
+
+        if (class_exists($class)) {
+            return $class;
+        }
+
+        throw new InvalidArgumentException('Unable to find observer: '.$class);
     }
 
     /**
