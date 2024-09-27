@@ -183,8 +183,11 @@ trait HasEvents
     public function getObservableEvents(): array
     {
         return [
-            'retrieved', 'creating', 'created', 'updating', 'updated',
-            'saving', 'saved', 'deleting', 'deleted',
+            'retrieved',
+            'creating', 'created',
+            'updating', 'updated',
+            'saving', 'saved',
+            'deleting', 'deleted',
         ];
     }
 
