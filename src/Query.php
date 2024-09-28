@@ -242,12 +242,12 @@ class Query
     public function insertOrUpdate(string $hash, array $attributes = []): void
     {
         $this->cache->transaction(function () use ($hash, $attributes) {
-            foreach ($attributes as $field => $value) {
-                $this->cache->setAttribute($hash, $field, $value);
+            if (! empty($delete = array_keys($attributes, null, true))) {
+                $this->cache->deleteAttribute($hash, $delete);
+            }
 
-                is_null($value)
-                    ? $this->cache->deleteAttribute($hash, $field)
-                    : $this->cache->setAttribute($hash, $field, $value);
+            if (! empty($update = array_diff_key($attributes, array_flip($delete)))) {
+                $this->cache->setAttributes($hash, $update);
             }
         });
     }
