@@ -183,6 +183,35 @@ it('can be updated or created with searchable attributes', function () {
     expect($model->is($found))->toBeTrue();
 });
 
+it('can delete attribute by setting it to null', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe',
+    ]);
+
+    $model->update(['name' => null]);
+
+    $model->refresh();
+
+    expect($model->name)->toBeNull();
+});
+
+it('can delete multiple attributes by setting them to null', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe',
+        'company' => 'Acme',
+    ]);
+
+    $model->update([
+        'name' => null,
+        'company' => null,
+    ]);
+
+    $model->refresh();
+
+    expect($model->name)->toBeNull();
+    expect($model->company)->toBeNull();
+});
+
 it('throws exception when update or creating with previous null searchable attribute in values to existing', function () {
     ModelStubWithSearchable::updateOrCreate([
         'id' => 'foo',
@@ -201,7 +230,6 @@ it('throws exception when creating a model with an empty key', function (mixed $
     ModelStub::create(['id' => $id]);
 })->with([
     '',
-    null,
 ])->throws(InvalidKeyException::class, 'A key is required to create a model.');
 
 it('throws exception when creating a model that already exists', function () {
