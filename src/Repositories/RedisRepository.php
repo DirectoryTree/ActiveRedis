@@ -49,9 +49,17 @@ class RedisRepository implements Repository
     /**
      * Set the hash field's value.
      */
-    public function setAttribute(string $hash, string $field, mixed $value): void
+    public function setAttribute(string $hash, string $attribute, string $value): void
     {
-        $this->redis->hset($hash, $field, $value);
+        $this->redis->hset($hash, $attribute, $value);
+    }
+
+    /**
+     * Set the hash field's value.
+     */
+    public function setAttributes(string $hash, array $attributes): void
+    {
+        $this->redis->hmset($hash, $attributes);
     }
 
     /**
@@ -63,7 +71,7 @@ class RedisRepository implements Repository
     }
 
     /**
-     * Get all the fields in the hash.
+     * Get all the attributes in the hash.
      */
     public function getAttributes(string $hash): array
     {
@@ -89,11 +97,11 @@ class RedisRepository implements Repository
     }
 
     /**
-     * Delete the field from the hash.
+     * Delete the attributes from the hash.
      */
-    public function deleteAttribute(string $hash, string $field): void
+    public function deleteAttribute(string $hash, array|string $attributes): void
     {
-        $this->redis->hdel($hash, $field);
+        $this->redis->hdel($hash, ...(array) $attributes);
     }
 
     /**

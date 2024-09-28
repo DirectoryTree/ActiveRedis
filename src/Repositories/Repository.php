@@ -18,9 +18,14 @@ interface Repository
     public function chunk(string $pattern, int $count): Generator;
 
     /**
-     * Set the hash field's value.
+     * Set a hash field's value.
      */
-    public function setAttribute(string $hash, string $field, mixed $value): void;
+    public function setAttribute(string $hash, string $attribute, string $value): void;
+
+    /**
+     * Set multiple fields on the hash.
+     */
+    public function setAttributes(string $hash, array $attributes): void;
 
     /**
      * Get the hash field's value.
@@ -43,9 +48,9 @@ interface Repository
     public function getExpiry(string $hash): ?int;
 
     /**
-     * Delete the field from the hash.
+     * Delete the field(s) from the hash.
      */
-    public function deleteAttribute(string $hash, string $field): void;
+    public function deleteAttribute(string $hash, array|string $attributes): void;
 
     /**
      * Delete the given hash.
