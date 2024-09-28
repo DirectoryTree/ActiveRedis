@@ -264,7 +264,7 @@ abstract class Model implements Arrayable, ArrayAccess
             $this->updateTimestamps();
         }
 
-        if (empty(trim($key = $this->getKey()))) {
+        if (empty($key = trim($this->getKey()))) {
             throw new InvalidKeyException('A key is required to create a model.');
         }
 
