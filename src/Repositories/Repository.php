@@ -48,9 +48,9 @@ interface Repository
     public function getExpiry(string $hash): ?int;
 
     /**
-     * Delete the field(s) from the hash.
+     * Delete the attributes from the hash.
      */
-    public function deleteAttribute(string $hash, array|string $attributes): void;
+    public function deleteAttributes(string $hash, array|string $attributes): void;
 
     /**
      * Delete the given hash.

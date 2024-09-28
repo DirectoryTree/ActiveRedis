@@ -243,7 +243,7 @@ class Query
     {
         $this->cache->transaction(function () use ($hash, $attributes) {
             if (! empty($delete = array_keys($attributes, null, true))) {
-                $this->cache->deleteAttribute($hash, $delete);
+                $this->cache->deleteAttributes($hash, $delete);
             }
 
             if (! empty($update = array_diff_key($attributes, array_flip($delete)))) {

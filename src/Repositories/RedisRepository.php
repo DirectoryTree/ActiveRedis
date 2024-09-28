@@ -99,7 +99,7 @@ class RedisRepository implements Repository
     /**
      * Delete the attributes from the hash.
      */
-    public function deleteAttribute(string $hash, array|string $attributes): void
+    public function deleteAttributes(string $hash, array|string $attributes): void
     {
         $this->redis->hdel($hash, ...(array) $attributes);
     }
