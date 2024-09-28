@@ -96,7 +96,7 @@ trait HasAttributes
             $value = $value ? '1' : '0';
         }
 
-        $this->attributes[$key] = (string) $value;
+        $this->attributes[$key] = is_null($value) ? null : (string) $value;
 
         return $this;
     }
