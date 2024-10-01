@@ -203,7 +203,7 @@ abstract class Model implements Arrayable, ArrayAccess
     public function setExpiry(CarbonInterface|int $seconds): void
     {
         if ($seconds instanceof CarbonInterface) {
-            $seconds = Date::now()->diffInSeconds($seconds);
+            $seconds = (int) Date::now()->diffInSeconds($seconds);
         }
 
         $this->newQuery()->expire($this->getHashKey(), $seconds);
