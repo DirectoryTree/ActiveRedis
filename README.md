@@ -26,6 +26,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
     - [Model Identifiers](#model-identifiers)
     - [Model Timestamps](#model-timestamps)
     - [Model Casts](#model-casts)
+    - [Model Events](#model-events)
     - [Model Connection](#model-connection)
   - [Updating Models](#updating-models)
   - [Deleting Models](#deleting-models)
@@ -301,6 +302,68 @@ $visit = Visit::create(['type' => 'unique']);
 $visit->type; // (enum) VisitType::Unique
 ```
 
+#### Model Events
+
+ActiveRedis models dispatch several events, allowing you to hook into the following moments in a model's lifecycle:
+`retrieved`, `creating`, `created`, `updating`, `updated`, `saving`, `saved`, `deleting`, and `deleted`.
+
+You may register listeners for these methods inside your model's `booted` method:
+
+> You may return `false` from an event listener on the `creating`, `updating`, or `deleting` events to cancel the operation.
+
+```php
+class Visit extends Model
+{
+    protected static function booted(): void
+    {
+        static::creating(function (Visit $visit) {
+            // ...
+        });
+        
+        // ...
+    }
+}
+```
+
+If you prefer, you may also create a model observer:
+
+```php
+class VisitObserver
+{
+    public function creating(Visit $visit): void
+    {
+        // ...
+    }
+}
+```
+
+And register it using the `observe` method:
+
+```php
+use App\Redis\Visit;
+
+class AppServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        Visit::observe(VisitObserver::class);
+    }
+}
+```
+
+#### Model Connection
+
+By default, models will use the default Redis connection defined in your Laravel configuration.
+
+To use a different connection, you may override the `connection` property on the model:
+
+```php
+class Visit extends Model
+{
+    protected ?string $connection = 'visits';
+}
+```
+
 ### Updating Models
 
 You may update models using the `update()` method:
@@ -319,19 +382,6 @@ Or by setting model attributes and calling the `save()` method:
 $visit->ip = 'xxx.xxx.xxx.xxx';
 
 $visit->save();
-```
-
-#### Model Connection
-
-By default, models will use the default Redis connection defined in your Laravel configuration.
-
-To use a different connection, you may override the `connection` property on the model:
-
-```php
-class Visit extends Model
-{
-    protected ?string $connection = 'visits';
-}
 ```
 
 ### Deleting Models
