@@ -36,6 +36,11 @@ it('casts json', function () {
     expect($model->json)->toBeArray();
     expect($model->json['name'])->toEqual('John');
     expect($model->json['age'])->toEqual(30);
+
+    expect($model->toArray()['json'])->toBe([
+        'name' => 'John',
+        'age' => 30,
+    ]);
 });
 
 it('casts array', function () {
@@ -48,9 +53,12 @@ it('casts array', function () {
 
     expect($model->array)->toBeArray();
     expect($model->array)->toEqual([1, 2, 3]);
+    expect($model->toArray()['array'])->toBe([1, 2, 3]);
 });
 
 it('casts date', function () {
+    Date::setTestNow(Date::now());
+
     $model = new ModelStubWithCasts;
 
     $model->date = Date::now()->format('Y-m-d');
@@ -61,6 +69,7 @@ it('casts date', function () {
     expect($model->date)->toBeInstanceOf(Carbon::class);
     expect($model->date)->toEqual(Date::today());
     expect($model->date)->isSameDay(Date::now());
+    expect($model->toArray()['date'])->toBe(Date::now()->startOfDay()->toISOString());
 });
 
 it('casts string', function () {
@@ -91,6 +100,7 @@ it('casts object', function () {
     expect($model->object)->toBeInstanceOf(stdClass::class);
     expect($model->object->name)->toEqual('John');
     expect($model->object->age)->toEqual(30);
+    expect($model->toArray()['object'])->toBeInstanceOf(stdClass::class);
 });
 
 it('casts decimal', function () {
@@ -103,6 +113,7 @@ it('casts decimal', function () {
 
     expect($model->decimal)->toBeString();
     expect($model->decimal)->toEqual('123.46');
+    expect($model->toArray()['decimal'])->toBe('123.46');
 });
 
 it('casts timestamp', function () {
@@ -115,6 +126,7 @@ it('casts timestamp', function () {
 
     expect($model->timestamp)->toBeInt();
     expect($model->timestamp)->toEqual($timestamp);
+    expect($model->toArray()['timestamp'])->toBe($timestamp);
 });
 
 it('casts collection', function () {
@@ -127,6 +139,7 @@ it('casts collection', function () {
 
     expect($model->collection)->toBeInstanceOf(Collection::class);
     expect($model->collection)->toEqual(collect([1, 2, 3]));
+    expect($model->toArray()['collection'])->toBe([1, 2, 3]);
 });
 
 it('casts integer', function () {
@@ -139,6 +152,7 @@ it('casts integer', function () {
 
     expect($model->integer)->toBeInt();
     expect($model->integer)->toEqual(123);
+    expect($model->toArray()['integer'])->toBe(123);
 });
 
 it('casts boolean', function () {
@@ -155,6 +169,7 @@ it('casts boolean', function () {
 
     $model->boolean = '0';
     expect($model->boolean)->toBeFalse();
+    expect($model->toArray()['boolean'])->toBeFalse();
 });
 
 it('casts float', function () {
@@ -166,7 +181,8 @@ it('casts float', function () {
     $model->refresh();
 
     expect($model->float)->toBeFloat();
-    expect($model->float)->toEqual(123.45);
+    expect($model->float)->toBe(123.45);
+    expect($model->toArray()['float'])->toBe(123.45);
 });
 
 it('casts datetime', function () {
@@ -179,6 +195,7 @@ it('casts datetime', function () {
 
     expect($model->datetime)->toBeInstanceOf(Carbon::class);
     expect($model->datetime)->toEqual(Carbon::parse('2024-09-24 15:30:00'));
+    expect($model->toArray()['datetime'])->toBe(Carbon::parse('2024-09-24 15:30:00')->toISOString());
 });
 
 it('casts custom_datetime', function () {
@@ -191,6 +208,7 @@ it('casts custom_datetime', function () {
 
     expect($model->custom_datetime)->toBeInstanceOf(Carbon::class);
     expect($model->custom_datetime)->toEqual(Carbon::parse('2024-09-24 00:00:00'));
+    expect($model->toArray()['custom_datetime'])->toBe('2024-09-24');
 });
 
 it('casts immutable_date', function () {
@@ -203,6 +221,7 @@ it('casts immutable_date', function () {
 
     expect($model->immutable_date)->toBeInstanceOf(CarbonImmutable::class);
     expect($model->immutable_date)->toEqual(CarbonImmutable::parse('2024-09-24 00:00:00'));
+    expect($model->toArray()['immutable_date'])->toBe(CarbonImmutable::parse('2024-09-24 00:00:00')->toISOString());
 });
 
 it('casts immutable_datetime', function () {
@@ -215,4 +234,5 @@ it('casts immutable_datetime', function () {
 
     expect($model->immutable_datetime)->toBeInstanceOf(CarbonImmutable::class);
     expect($model->immutable_datetime)->toEqual(CarbonImmutable::parse('2024-09-24 15:30:00'));
+    expect($model->toArray()['immutable_datetime'])->toBe(CarbonImmutable::parse('2024-09-24 15:30:00')->toISOString());
 });
