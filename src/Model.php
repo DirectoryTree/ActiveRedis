@@ -10,11 +10,13 @@ use DirectoryTree\ActiveRedis\Concerns\HasCasts;
 use DirectoryTree\ActiveRedis\Concerns\HasEvents;
 use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
 use DirectoryTree\ActiveRedis\Concerns\HidesAttributes;
+use DirectoryTree\ActiveRedis\Concerns\Routable;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
@@ -23,7 +25,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 
-abstract class Model implements Arrayable, ArrayAccess
+abstract class Model implements Arrayable, ArrayAccess, UrlRoutable
 {
     use Bootable;
     use ForwardsCalls;
@@ -32,6 +34,7 @@ abstract class Model implements Arrayable, ArrayAccess
     use HasEvents;
     use HasTimestamps;
     use HidesAttributes;
+    use Routable;
 
     /**
      * The name of the "created at" column.
