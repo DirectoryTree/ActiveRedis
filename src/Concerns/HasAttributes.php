@@ -2,6 +2,7 @@
 
 namespace DirectoryTree\ActiveRedis\Concerns;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 
 /** @mixin \DirectoryTree\ActiveRedis\Model */
@@ -51,6 +52,103 @@ trait HasAttributes
         }
 
         return $value;
+    }
+
+    /**
+     * Get the model's visible attributes.
+     */
+    protected function getArrayableAttributes(): array
+    {
+        return $this->getArrayableItems($this->getAttributes());
+    }
+
+    /**
+     * Get an attribute array of all arrayable values.
+     */
+    protected function getArrayableItems(array $values): array
+    {
+        if (count($this->getVisible()) > 0) {
+            $values = array_intersect_key($values, array_flip($this->getVisible()));
+        }
+
+        if (count($this->getHidden()) > 0) {
+            $values = array_diff_key($values, array_flip($this->getHidden()));
+        }
+
+        return $values;
+    }
+
+    /**
+     * Convert the model's attributes to an array.
+     */
+    public function attributesToArray(): array
+    {
+        $attributes = $this->addDateAttributesToArray(
+            $this->getArrayableAttributes()
+        );
+
+        return $this->addCastAttributesToArray(
+            $attributes,
+        );
+    }
+
+    /**
+     * Add the date attributes to the attributes array.
+     */
+    protected function addDateAttributesToArray(array $attributes): array
+    {
+        foreach ($this->getDates() as $key) {
+            if (! isset($attributes[$key])) {
+                continue;
+            }
+
+            $attributes[$key] = $this->serializeDate(
+                $this->asDateTime($attributes[$key])
+            );
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Add the casted attributes to the attributes array.
+     */
+    protected function addCastAttributesToArray(array $attributes): array
+    {
+        foreach ($this->getCasts() as $key => $value) {
+            if (! array_key_exists($key, $attributes)) {
+                continue;
+            }
+
+            // Here we will cast the attribute. Then, if the cast is a date or datetime cast
+            // then we will serialize the date for the array. This will convert the dates
+            // to strings based on the date format specified for these Eloquent models.
+            $attributes[$key] = $this->castAttribute(
+                $key, $attributes[$key]
+            );
+
+            // If the attribute cast was a date or a datetime, we will serialize the date as
+            // a string. This allows the developers to customize how dates are serialized
+            // into an array without affecting how they are persisted into the storage.
+            if (isset($attributes[$key]) && in_array($value, ['date', 'datetime', 'immutable_date', 'immutable_datetime'])) {
+                $attributes[$key] = $this->serializeDate($attributes[$key]);
+            }
+
+            if (isset($attributes[$key]) && ($this->isCustomDateTimeCast($value) ||
+                    $this->isImmutableCustomDateTimeCast($value))) {
+                $attributes[$key] = $attributes[$key]->format(explode(':', $value, 2)[1]);
+            }
+
+            if ($this->isEnumCastable($key) && (! ($attributes[$key] ?? null) instanceof Arrayable)) {
+                $attributes[$key] = isset($attributes[$key]) ? $this->getStorableEnumValue($this->getCasts()[$key], $attributes[$key]) : null;
+            }
+
+            if ($attributes[$key] instanceof Arrayable) {
+                $attributes[$key] = $attributes[$key]->toArray();
+            }
+        }
+
+        return $attributes;
     }
 
     /**

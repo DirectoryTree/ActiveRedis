@@ -6,7 +6,9 @@ use BackedEnum;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException as BrickMathException;
 use Brick\Math\RoundingMode;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use DateTimeImmutable;
 use DateTimeInterface;
 use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
 use Illuminate\Support\Carbon;
@@ -346,6 +348,16 @@ trait HasCasts
         }
 
         return $date ?: Date::parse($value);
+    }
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     */
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date instanceof DateTimeImmutable
+            ? CarbonImmutable::instance($date)->toJSON()
+            : Carbon::instance($date)->toJSON();
     }
 
     /**

@@ -9,6 +9,7 @@ use DirectoryTree\ActiveRedis\Concerns\HasAttributes;
 use DirectoryTree\ActiveRedis\Concerns\HasCasts;
 use DirectoryTree\ActiveRedis\Concerns\HasEvents;
 use DirectoryTree\ActiveRedis\Concerns\HasTimestamps;
+use DirectoryTree\ActiveRedis\Concerns\HidesAttributes;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
@@ -30,6 +31,7 @@ abstract class Model implements Arrayable, ArrayAccess
     use HasCasts;
     use HasEvents;
     use HasTimestamps;
+    use HidesAttributes;
 
     /**
      * The name of the "created at" column.
@@ -555,7 +557,7 @@ abstract class Model implements Arrayable, ArrayAccess
      */
     public function toArray(): array
     {
-        return $this->getAttributes();
+        return $this->attributesToArray();
     }
 
     /**
