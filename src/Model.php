@@ -552,7 +552,7 @@ abstract class Model implements Arrayable, ArrayAccess, UrlRoutable
      */
     protected function getNewKey(): string
     {
-        return Str::uuid();
+        return Str::orderedUuid();
     }
 
     /**
