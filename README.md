@@ -157,6 +157,9 @@ use DirectoryTree\ActiveRedis\Model;
 
 class Visit extends Model
 {
+    /**
+     * The key name for the model.
+     */
     protected string $key = 'custom_key';
 }
 ```
@@ -177,12 +180,13 @@ use Illuminate\Support\Str;
 use DirectoryTree\ActiveRedis\Model;
 
 class Visit extends Model
-{
-    // ...
-    
+{    
+    /**
+     * Generate a new key for the model.
+     */
     protected function getNewKey(): string
     {
-        return Str::orderedUuid();
+        return Str::uuid();
     }
 }
 ```
@@ -240,6 +244,9 @@ To cast model attributes to a specific type, you may define a `casts` property o
 ```php
 class Visit extends Model
 {
+    /**
+     * The attributes that should be cast to native types.
+     */
     protected array $casts = [
         'user_id' => 'integer',
         'authenticated' => 'boolean',
@@ -288,6 +295,9 @@ use App\Enums\VisitType;
 
 class Visit extends Model
 {
+    /**
+     * The attributes that should be cast to native types.
+     */
     protected array $casts = [
         'type' => VisitType::class,
     ];
@@ -314,6 +324,9 @@ You may register listeners for these methods inside your model's `booted` method
 ```php
 class Visit extends Model
 {
+    /**
+     * The "booted" method of the model.
+     */
     protected static function booted(): void
     {
         static::creating(function (Visit $visit) {
@@ -330,6 +343,9 @@ If you prefer, you may also create a model observer:
 ```php
 class VisitObserver
 {
+    /**
+     * Handle the "creating" event.
+     */
     public function creating(Visit $visit): void
     {
         // ...
@@ -344,6 +360,9 @@ use App\Redis\Visit;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Bootstrap any application services.
+     */
     public function boot(): void
     {
         Visit::observe(VisitObserver::class);
@@ -360,6 +379,9 @@ To use a different connection, you may override the `connection` property on the
 ```php
 class Visit extends Model
 {
+    /**
+     * The Redis connection to use.
+     */
     protected ?string $connection = 'visits';
 }
 ```
@@ -515,6 +537,9 @@ namespace App\Redis;
 
 class Visit extends Model
 {
+    /**
+     * The attributes that are searchable.
+     */
     protected array $searchable = ['ip'];
 }
 ```
@@ -547,6 +572,9 @@ When multiple searchable attributes are defined, they will be stored in alphabet
 ```php
 class Visit extends Model
 {
+    /**
+     * The attributes that are searchable.
+     */
     protected array $searchable = ['user_id', 'ip'];
 }
 ```
