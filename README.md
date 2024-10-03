@@ -590,12 +590,12 @@ visits:id:{id}:ip:{ip}:user_id:{user_id}
 > useful name your models in a way that references the searchable attributes. For example `UserVisit`.
 
 ```php
-$visit = Visit::create([
+$visit = UserVisit::create([
     'user_id' => 1,
     'ip' => request()->ip(),
 ]);
 
-$visit->getHashKey(); // "visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:1"
+$visit->getHashKey(); // "user_visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:1"
 ```
 
 Once the searchable attributes have been defined, you may begin querying for them using the `where()` method:
