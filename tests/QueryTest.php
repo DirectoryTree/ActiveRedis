@@ -1,6 +1,7 @@
 <?php
 
 use DirectoryTree\ActiveRedis\Exceptions\AttributeNotSearchableException;
+use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelEnumStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
 use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithSearchable;
@@ -35,4 +36,13 @@ it('generates query using custom key', function () {
 
 it('generates query using searchable attributes', function () {
     expect(query(new ModelStubWithSearchable)->getQuery())->toBe('model_stub_with_searchables:id:*:company_id:*:user_id:*');
+});
+
+it('can handle enum in where clause', function () {
+    $query = query(new ModelStubWithSearchable);
+
+    $query->where('user_id', ModelEnumStub::One);
+    $query->where('company_id', ModelEnumStub::Two);
+
+    expect($query->getQuery())->toBe('model_stub_with_searchables:id:*:company_id:two:user_id:one');
 });
