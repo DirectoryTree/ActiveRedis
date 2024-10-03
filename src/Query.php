@@ -2,12 +2,14 @@
 
 namespace DirectoryTree\ActiveRedis;
 
+use BackedEnum;
 use Closure;
 use DirectoryTree\ActiveRedis\Exceptions\AttributeNotSearchableException;
 use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class Query
 {
@@ -107,10 +109,24 @@ class Query
                 );
             }
 
-            $this->wheres[$key] = (string) $value;
+            $this->wheres[$key] = $this->prepareWhereValue($value);
         }
 
         return $this;
+    }
+
+    /**
+     * Prepare a value for a where clause.
+     */
+    protected function prepareWhereValue(mixed $value): string
+    {
+        if ($value instanceof UnitEnum) {
+            return $value instanceof BackedEnum
+                ? $value->value
+                : $value->name;
+        }
+
+        return (string) $value;
     }
 
     /**
