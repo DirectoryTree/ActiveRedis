@@ -236,3 +236,9 @@ it('casts immutable_datetime', function () {
     expect($model->immutable_datetime)->toEqual(CarbonImmutable::parse('2024-09-24 15:30:00'));
     expect($model->toArray()['immutable_datetime'])->toBe(CarbonImmutable::parse('2024-09-24 15:30:00')->toISOString());
 });
+
+it('returns null with primitive cast when value is null', function () {
+    $model = new ModelStubWithCasts(['integer' => null]);
+
+    expect($model->integer)->toBeNull();
+});

@@ -34,6 +34,33 @@ trait HasCasts
     protected static array $castTypeCache = [];
 
     /**
+     * The built-in, primitive cast types.
+     */
+    protected static array $primitiveCastTypes = [
+        'array',
+        'bool',
+        'boolean',
+        'collection',
+        'custom_datetime',
+        'date',
+        'datetime',
+        'decimal',
+        'double',
+        'float',
+        'hashed',
+        'immutable_date',
+        'immutable_datetime',
+        'immutable_custom_datetime',
+        'int',
+        'integer',
+        'json',
+        'object',
+        'real',
+        'string',
+        'timestamp',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      */
     public function getCasts(): array
@@ -58,7 +85,13 @@ trait HasCasts
      */
     protected function castAttribute(string $key, mixed $value): mixed
     {
-        switch ($this->getCastType($key)) {
+        $castType = $this->getCastType($key);
+
+        if (is_null($value) && in_array($castType, static::$primitiveCastTypes)) {
+            return $value;
+        }
+
+        switch ($castType) {
             case 'int':
             case 'integer':
                 return (int) $value;
