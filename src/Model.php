@@ -13,19 +13,22 @@ use DirectoryTree\ActiveRedis\Concerns\HidesAttributes;
 use DirectoryTree\ActiveRedis\Concerns\Routable;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
+use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Redis\RedisManager;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
+use JsonException;
 
-abstract class Model implements Arrayable, ArrayAccess, UrlRoutable
+abstract class Model implements Arrayable, ArrayAccess, Jsonable, UrlRoutable
 {
     use Bootable;
     use ForwardsCalls;
@@ -561,6 +564,28 @@ abstract class Model implements Arrayable, ArrayAccess, UrlRoutable
     public function toArray(): array
     {
         return $this->attributesToArray();
+    }
+
+    /**
+     * Convert the model instance to JSON.
+     */
+    public function toJson(mixed $options = 0): string
+    {
+        try {
+            $json = json_encode($this->jsonSerialize(), $options | JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw JsonEncodingException::forModel($this, $e->getMessage());
+        }
+
+        return $json;
+    }
+
+    /**
+     * Convert the object into something JSON serializable.
+     */
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
     }
 
     /**

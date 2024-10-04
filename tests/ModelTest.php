@@ -306,3 +306,11 @@ it('can be transformed into an array', function () {
         'id', 'name', 'created_at', 'updated_at',
     ]);
 });
+
+it('can be converted to json', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe',
+    ]);
+
+    expect($model->toJson())->toBe(json_encode($model->toArray()));
+});
