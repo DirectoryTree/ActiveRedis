@@ -15,7 +15,7 @@ jobs:
                 os: [ ubuntu-latest ]
                 php: [ 8.3, 8.2, 8.1 ]
                 laravel: [ 11.*, 10.*, 9.* ]
-                redis-client: [ phpredis, redis ]
+                redis-client: [ phpredis, predis ]
                 dependency-version: [ prefer-stable ]
                 include:
                     -   redis-client: phpredis
