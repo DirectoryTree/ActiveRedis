@@ -5,6 +5,9 @@ namespace DirectoryTree\ActiveRedis\Repositories;
 use Closure;
 use Generator;
 use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Redis\Connections\PhpRedisConnection;
+use Illuminate\Redis\Connections\PredisConnection;
+use Illuminate\Support\Str;
 
 class RedisRepository implements Repository
 {
@@ -30,6 +33,16 @@ class RedisRepository implements Repository
     {
         $cursor = null;
 
+        $prefix = match (true) {
+            $this->redis instanceof PhpRedisConnection => $this->redis->getOption($this->redis->client()::OPT_PREFIX),
+            $this->redis instanceof PredisConnection => $this->redis->getOptions()->prefix->getPrefix(),
+            default => null
+        };
+
+        if (filled($prefix)) {
+            $pattern = "{$prefix}{$pattern}";
+        }
+
         do {
             [$cursor, $keys] = $this->redis->scan($cursor, [
                 'match' => $pattern,
@@ -40,9 +53,18 @@ class RedisRepository implements Repository
                 return;
             }
 
-            if (! empty($keys)) {
-                yield $keys;
+            if (empty($keys)) {
+                continue;
             }
+
+            if (filled($prefix)) {
+                $keys = array_map(
+                    fn (string $key) => Str::after($key, $prefix),
+                    $keys
+                );
+            }
+
+            yield $keys;
         } while ($cursor !== '0');
     }
 

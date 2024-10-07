@@ -19,6 +19,19 @@ it('can be found by its key', function () {
     expect($found->getKey())->toBe($model->getKey());
 });
 
+it('queries existing attributes', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe'
+    ]);
+
+    $found = ModelStub::find($model->getKey());
+
+    expect($found)->is($model)->toBeTrue();
+    expect($found->getKey())->toBe($model->getKey());
+
+    expect($found->name)->toBe($model->name);
+});
+
 it('returns null when finding by null or empty key', function (?string $key) {
     ModelStub::create();
 

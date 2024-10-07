@@ -1,6 +1,7 @@
 vendor
 composer.lock
 psalm.phar
+.idea
 .php_cs.cache
 .phpunit.result.cache
 .php-cs-fixer.cache
