@@ -31,12 +31,16 @@ class RedisRepository implements Repository
      */
     public function chunk(string $pattern, int $count): Generator
     {
-        $cursor = null;
-
-        $prefix = match (true) {
-            $this->redis instanceof PhpRedisConnection => $this->redis->getOption($this->redis->client()::OPT_PREFIX),
-            $this->redis instanceof PredisConnection => $this->redis->getOptions()->prefix->getPrefix(),
-            default => null
+        [$cursor, $prefix] = match (true) {
+            $this->redis instanceof PhpRedisConnection => [
+                /* cursor */ null, /** @see \Redis::scan() */
+                /* prefix */ $this->redis->getOption($this->redis->client()::OPT_PREFIX),
+            ],
+            $this->redis instanceof PredisConnection => [
+                /* cursor */ 0, // Predis casts arguments to string
+                /* prefix */ $this->redis->getOptions()->prefix->getPrefix(),
+            ],
+            default => [null, null]
         };
 
         if (filled($prefix)) {
