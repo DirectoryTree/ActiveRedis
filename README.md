@@ -34,6 +34,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
   - [Querying Models](#querying-models)
     - [Chunking](#chunking)
     - [Searching](#searching)
+- [Credits](#credits)
 
 ## Requirements
 
@@ -639,3 +640,11 @@ $visit = Visit::create(['user_id' => 1]);
 // HSET visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:2
 $visit->update(['user_id' => 2]);
 ```
+
+## Credits
+
+This package is directly inspired from <a href="https://laravel.com/docs/eloquent">Laravel's Eloquent</a>, and most features are direct ports to a Redis equivalent.
+
+I am forever grateful for the work <a href="https://github.com/taylorotwell">Taylor Otwell</a> has produced.
+
+If you can, support his work by purchasing a <a href="https://github.com/sponsors/taylorotwell">sponsorship</a>, or one of his many Laravel based services.
