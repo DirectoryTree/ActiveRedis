@@ -15,8 +15,11 @@ jobs:
                 os: [ ubuntu-latest ]
                 php: [ 8.3, 8.2, 8.1 ]
                 laravel: [ 11.*, 10.*, 9.* ]
+                redis-client: [ phpredis, predis ]
                 dependency-version: [ prefer-stable ]
                 include:
+                    -   redis-client: phpredis
+                        php-extensions: redis
                     -   laravel: 11.*
                         testbench: 9.*
                     -   laravel: 10.*
@@ -36,7 +39,7 @@ jobs:
                     - 6379:6379
                 options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-        name: ${{ matrix.os }} - P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
+        name: ${{ matrix.os }} - P${{ matrix.php }} - L${{ matrix.laravel }} (${{ matrix.redis-client }}) - ${{ matrix.dependency-version }}
 
         steps:
             -   name: Checkout code
@@ -52,6 +55,7 @@ jobs:
                 uses: shivammathur/setup-php@v2
                 with:
                     php-version: ${{ matrix.php }}
+                    extensions: ${{ matrix.php-extensions }}
 
             -   name: Install dependencies
                 run: |
@@ -60,3 +64,5 @@ jobs:
 
             -   name: Execute tests
                 run: vendor/bin/pest
+                env:
+                    REDIS_CLIENT: ${{ matrix.redis-client }}

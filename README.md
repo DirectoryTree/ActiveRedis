@@ -38,7 +38,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
 ## Requirements
 
 - PHP >= 8.1
-- Predis >= 2.0
+- Redis >= 3.0
 - Laravel >= 9.0
 
 ## Installation

@@ -5,6 +5,9 @@ namespace DirectoryTree\ActiveRedis\Repositories;
 use Closure;
 use Generator;
 use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Redis\Connections\PhpRedisConnection;
+use Illuminate\Redis\Connections\PredisConnection;
+use Illuminate\Support\Str;
 
 class RedisRepository implements Repository
 {
@@ -28,11 +31,11 @@ class RedisRepository implements Repository
      */
     public function chunk(string $pattern, int $count): Generator
     {
-        $cursor = null;
+        [$cursor, $prefix] = array_values($this->getScanParameters());
 
         do {
             [$cursor, $keys] = $this->redis->scan($cursor, [
-                'match' => $pattern,
+                'match' => $prefix.$pattern,
                 'count' => $count,
             ]);
 
@@ -40,10 +43,41 @@ class RedisRepository implements Repository
                 return;
             }
 
-            if (! empty($keys)) {
-                yield $keys;
+            if (empty($keys)) {
+                continue;
             }
+
+            if (empty($prefix)) {
+                yield $keys;
+
+                continue;
+            }
+
+            yield array_map(function (string $key) use ($prefix) {
+                return Str::after($key, $prefix);
+            }, $keys);
         } while ($cursor !== '0');
+    }
+
+    /**
+     * Get the scan parameters for the Redis connection.
+     */
+    protected function getScanParameters(): array
+    {
+        return match (true) {
+            $this->redis instanceof PhpRedisConnection => [
+                'cursor' => null,
+                'prefix' => $this->redis->getOption($this->redis->client()::OPT_PREFIX),
+            ],
+            $this->redis instanceof PredisConnection => [
+                'cursor' => 0,
+                'prefix' => $this->redis->getOptions()->prefix->getPrefix(),
+            ],
+            default => [
+                'cursor' => null,
+                'prefix' => null,
+            ]
+        };
     }
 
     /**
