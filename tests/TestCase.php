@@ -14,12 +14,4 @@ abstract class TestCase extends BaseTestCase
     {
         return [ActiveRedisServiceProvider::class];
     }
-
-    /**
-     * Define environment setup.
-     */
-    protected function defineEnvironment($app): void
-    {
-        $app['config']->set('database.redis.options.prefix', null);
-    }
 }
