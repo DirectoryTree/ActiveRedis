@@ -511,9 +511,9 @@ Or call the `each` method:
 ```php
 use App\Redis\Visit;
 
-Visit::each(100, function (Visit $visit) {
+Visit::each(function (Visit $visit) {
     // ...
-});
+}, 100);
 ```
 
 You may return `false` in the callback to stop the chunking query:
