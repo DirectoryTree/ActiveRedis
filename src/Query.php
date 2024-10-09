@@ -31,11 +31,25 @@ class Query
      */
     public function find(?string $id): ?Model
     {
-        if (! is_null($id)) {
+        if (is_null($id)) {
+            return null;
+        }
+
+        if (! empty($this->model->getSearchable())) {
             return $this->whereKey($id)->first();
         }
 
-        return null;
+        $hash = $this->model->getBaseHashWithKey($id);
+        $attributes = $this->cache->getAttributes($hash);
+
+        if (empty($attributes)) {
+            return null;
+        }
+
+        return $this->model->newFromBuilder([
+            ...$attributes,
+            $this->model->getKeyName() => $this->getKeyValue($hash),
+        ]);
     }
 
     /**
