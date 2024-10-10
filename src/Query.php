@@ -109,10 +109,7 @@ class Query
     {
         $wheres = is_string($attribute) ? [$attribute => $value] : $attribute;
 
-        $searchable = [
-            $this->model->getKeyName(),
-            ...$this->model->getSearchable(),
-        ];
+        $searchable = $this->getSearchableAttributes();
 
         foreach ($wheres as $key => $value) {
             if (! in_array($key, $searchable)) {
@@ -127,6 +124,17 @@ class Query
         }
 
         return $this;
+    }
+
+    /**
+     * Get the searchable attributes for the model.
+     */
+    protected function getSearchableAttributes(): array
+    {
+        return [
+            $this->model->getKeyName(),
+            ...$this->model->getSearchable(),
+        ];
     }
 
     /**
