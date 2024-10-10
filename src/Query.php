@@ -31,11 +31,19 @@ class Query
      */
     public function find(?string $id): ?Model
     {
-        if (! is_null($id)) {
+        if (is_null($id)) {
+            return null;
+        }
+
+        if (! empty($this->model->getSearchable())) {
             return $this->whereKey($id)->first();
         }
 
-        return null;
+        if (! $this->cache->exists($hash = $this->model->getBaseHashWithKey($id))) {
+            return null;
+        }
+
+        return $this->newModelFromHash($hash);
     }
 
     /**
@@ -218,16 +226,24 @@ class Query
             $models = $this->model->newCollection();
 
             foreach ($chunk as $hash) {
-                $models->add($this->model->newFromBuilder([
-                    ...$this->cache->getAttributes($hash),
-                    $this->model->getKeyName() => $this->getKeyValue($hash),
-                ]));
+                $models->add($this->newModelFromHash($hash));
             }
 
             if ($callback($models) === false) {
                 return;
             }
         }
+    }
+
+    /**
+     * Create a new model instance from the given hash.
+     */
+    protected function newModelFromHash(string $hash): Model
+    {
+        return $this->model->newFromBuilder([
+            ...$this->cache->getAttributes($hash),
+            $this->model->getKeyName() => $this->getKeyValue($hash),
+        ]);
     }
 
     /**
