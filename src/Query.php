@@ -39,17 +39,11 @@ class Query
             return $this->whereKey($id)->first();
         }
 
-        $hash = $this->model->getBaseHashWithKey($id);
-        $attributes = $this->cache->getAttributes($hash);
-
-        if (empty($attributes)) {
+        if (! $this->cache->exists($hash = $this->model->getBaseHashWithKey($id))) {
             return null;
         }
 
-        return $this->model->newFromBuilder([
-            ...$attributes,
-            $this->model->getKeyName() => $this->getKeyValue($hash),
-        ]);
+        return $this->newModelFromHash($hash);
     }
 
     /**
@@ -232,16 +226,24 @@ class Query
             $models = $this->model->newCollection();
 
             foreach ($chunk as $hash) {
-                $models->add($this->model->newFromBuilder([
-                    ...$this->cache->getAttributes($hash),
-                    $this->model->getKeyName() => $this->getKeyValue($hash),
-                ]));
+                $models->add($this->newModelFromHash($hash));
             }
 
             if ($callback($models) === false) {
                 return;
             }
         }
+    }
+
+    /**
+     * Create a new model instance from the given hash.
+     */
+    protected function newModelFromHash(string $hash): Model
+    {
+        return $this->model->newFromBuilder([
+            ...$this->cache->getAttributes($hash),
+            $this->model->getKeyName() => $this->getKeyValue($hash),
+        ]);
     }
 
     /**
