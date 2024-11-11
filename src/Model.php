@@ -27,8 +27,9 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 use JsonException;
+use Stringable;
 
-abstract class Model implements Arrayable, ArrayAccess, Jsonable, UrlRoutable
+abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, UrlRoutable
 {
     use Bootable;
     use ForwardsCalls;
@@ -583,9 +584,17 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, UrlRoutable
     /**
      * Convert the object into something JSON serializable.
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    /**
+     * Convert the model to its string representation.
+     */
+    public function __toString(): string
+    {
+        return $this->toJson();
     }
 
     /**

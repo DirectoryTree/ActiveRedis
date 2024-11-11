@@ -314,3 +314,11 @@ it('can be converted to json', function () {
 
     expect($model->toJson())->toBe(json_encode($model->toArray()));
 });
+
+it('can be converted to string', function () {
+    $model = ModelStub::create([
+        'name' => 'John Doe',
+    ]);
+
+    expect((string) $model)->toBe(json_encode($model->toArray()));
+});
