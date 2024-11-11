@@ -47,7 +47,19 @@ class Query
     }
 
     /**
-     * Find a model by its  key or throw an exception.
+     * Find a model by its key or call a callback.
+     */
+    public function findOr(?string $id, Closure $callback): mixed
+    {
+        if (! is_null($model = $this->find($id))) {
+            return $model;
+        }
+
+        return $callback();
+    }
+
+    /**
+     * Find a model by its key or throw an exception.
      */
     public function findOrFail(?string $id): Model
     {

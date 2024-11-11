@@ -19,9 +19,21 @@ it('can be found by its key', function () {
     expect($found->getKey())->toBe($model->getKey());
 });
 
+it('can call callback when not found', function () {
+    $model = ModelStub::create();
+
+    $value = ModelStub::findOr($model->getKey(), fn () => false)->is($model);
+
+    expect($value)->toBeTrue();
+
+    $value = ModelStub::findOr('invalid', fn () => new stdClass);
+
+    expect($value)->toBeInstanceOf(stdClass::class);
+});
+
 it('queries existing attributes', function () {
     $model = ModelStub::create([
-        'name' => 'John Doe'
+        'name' => 'John Doe',
     ]);
 
     $found = ModelStub::find($model->getKey());
