@@ -212,7 +212,36 @@ it('can delete multiple attributes by setting them to null', function () {
     expect($model->company)->toBeNull();
 });
 
-it('throws exception when update or creating with previous null searchable attribute in values to existing', function () {
+it('does not throw exception when creating with existing id when forcing', function () {
+    ModelStub::create([
+        'id' => 'foo',
+    ]);
+
+    ModelStub::create([
+        'id' => 'foo',
+    ], true);
+
+    expect(ModelStub::get())->toHaveCount(1);
+});
+
+it('does not throw exception when updating or creating with previous null searchable attribute in values', function () {
+    $first = ModelStubWithSearchable::updateOrCreate([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => 2,
+    ]);
+
+    $second = ModelStubWithSearchable::updateOrCreate([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => null,
+    ], ['company_id' => 2]);
+
+    expect($first->is($second))->toBeFalse();
+    expect(ModelStubWithSearchable::get())->toHaveCount(1);
+});
+
+it('throws exception when updating or creating with previous null searchable attribute in values when force is false', function () {
     ModelStubWithSearchable::updateOrCreate([
         'id' => 'foo',
         'user_id' => 1,
@@ -223,7 +252,21 @@ it('throws exception when update or creating with previous null searchable attri
         'id' => 'foo',
         'user_id' => 1,
         'company_id' => null,
-    ], ['company_id' => 2]);
+    ], ['company_id' => 2], false);
+})->throws(DuplicateKeyException::class, 'A model with the key [foo] already exists.');
+
+it('throws exception when update or creating with previous null searchable attribute in values', function () {
+    ModelStubWithSearchable::create([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => 2,
+    ]);
+
+    ModelStubWithSearchable::create([
+        'id' => 'foo',
+        'user_id' => 1,
+        'company_id' => null,
+    ]);
 })->throws(DuplicateKeyException::class, 'A model with the key [foo] already exists.');
 
 it('throws exception when creating a model with an empty key', function (mixed $id) {
