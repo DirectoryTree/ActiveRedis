@@ -233,13 +233,17 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
      */
     public function update(array $attributes): void
     {
+        if (! $this->exists) {
+            return;
+        }
+
         $this->fill($attributes)->save();
     }
 
     /**
      * Save the model.
      */
-    public function save(): void
+    public function save(bool $force = false): void
     {
         if ($this->fireModelEvent('saving') === false) {
             return;
@@ -247,7 +251,7 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
 
         $saved = $this->exists
             ? $this->performUpdate()
-            : $this->performInsert();
+            : $this->performInsert($force);
 
         if ($saved) {
             $this->syncOriginal();
@@ -259,7 +263,7 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     /**
      * Perform a model insert operation.
      */
-    protected function performInsert(): bool
+    protected function performInsert(bool $force): bool
     {
         if (is_null($this->getKey())) {
             $this->setKey($this->getNewKey());
@@ -277,8 +281,10 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
             throw new InvalidKeyException('A key is required to create a model.');
         }
 
-        if ($this->newQuery()->find($key)) {
-            throw new DuplicateKeyException("A model with the key [{$key}] already exists.");
+        if ($existing = $this->newQuery()->find($key)) {
+            $force ? $existing->delete() : throw new DuplicateKeyException(
+                "A model with the key [{$key}] already exists."
+            );
         }
 
         $this->newQuery()->insertOrUpdate(

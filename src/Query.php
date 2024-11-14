@@ -73,11 +73,11 @@ class Query
     /**
      * Create a new model.
      */
-    public function create(array $attributes = []): Model
+    public function create(array $attributes = [], bool $force = false): Model
     {
         $instance = $this->model->newInstance($attributes);
 
-        $instance->save();
+        $instance->save($force);
 
         return $instance;
     }
@@ -97,15 +97,15 @@ class Query
     /**
      * Update a model or create a new one.
      */
-    public function updateOrCreate(array $attributes, array $values = []): Model
+    public function updateOrCreate(array $attributes, array $values = [], bool $force = true): Model
     {
         if (! is_null($instance = (clone $this)->where($attributes)->first())) {
-            $instance->fill($values)->save();
+            $instance->fill($values)->save($force);
 
             return $instance;
         }
 
-        return $this->create($attributes + $values);
+        return $this->create($attributes + $values, $force);
     }
 
     /**
