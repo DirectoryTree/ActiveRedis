@@ -149,6 +149,24 @@ Similarly, attempting to create a model with an empty ID will throw a `InvalidKe
 Visit::create(['id' => '']);
 ```
 
+If you're running a high traffic application that may encounter a race condition, you may
+pass in `true` in the second argument to `create` to ignore the exception and delete the existing record:
+
+```php
+Visit::create(['id' => 'custom-id']);
+
+// The existing model will be deleted.
+Visit::create(['id' => 'custom-id'], force: true);
+```
+
+Similarly, you may pass in `true` into the `save` method to ignore the exception and delete the existing record:
+
+```php
+(new Visit(['id' => 'custom-id'])->save();
+
+(new Visit(['id' => 'custom-id']))->save(force: true);
+```
+
 To change the name of the field in which the model key is stored, override the `key` property:
 
 ```php
