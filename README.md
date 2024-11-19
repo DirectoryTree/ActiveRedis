@@ -34,6 +34,7 @@ ActiveRedis provides you simple and efficient way to interact with Redis hashes 
   - [Querying Models](#querying-models)
     - [Chunking](#chunking)
     - [Searching](#searching)
+  - [Testing](#testing)
 - [Credits](#credits)
 
 ## Requirements
@@ -678,6 +679,35 @@ $visit = Visit::create(['user_id' => 1]);
 // HDEL visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:1
 // HSET visits:id:f195637b-7d48-43ab-abab-86e93dfc9410:ip:127.0.0.1:user_id:2
 $visit->update(['user_id' => 2]);
+```
+
+## Testing
+
+To run your application tests without a real Redis server, you may swap the underlying repository to an array.
+
+This will allow you to test with your models without needing to interact with Redis:
+
+```php
+use DirectoryTree\ActiveRedis\Model;
+
+Model::setRepository('array');
+```
+
+Otherwise, you will need to run your tests with a Redis server running, and flush your Redis database after each test:
+
+```php
+use Illuminate\Support\Facades\Redis;
+
+// Pest
+beforeEach(fn () => Redis::flushdb());
+
+// PHPUnit
+protected function setUp(): void
+{
+    parent::setUp();
+
+    Redis::flushdb();
+}
 ```
 
 ## Credits
