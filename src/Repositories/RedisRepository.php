@@ -127,7 +127,9 @@ class RedisRepository implements Repository
     {
         // The number of seconds until the key will expire, or
         // null if the key does not exist or has no timeout.
-        return $this->redis->ttl($hash);
+        $ttl = $this->redis->ttl($hash);
+
+        return $ttl > 0 ? $ttl : null;
     }
 
     /**
