@@ -14,6 +14,7 @@ use DirectoryTree\ActiveRedis\Concerns\Routable;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
+use DirectoryTree\ActiveRedis\Repositories\ArrayRepository;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
@@ -26,6 +27,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
+use InvalidArgumentException;
 use JsonException;
 use Stringable;
 
@@ -83,6 +85,11 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
      * The connection name for the model.
      */
     protected ?string $connection = null;
+
+    /**
+     * The repository for the model.
+     */
+    protected static string $repository = 'redis';
 
     /**
      * Handle dynamic method calls into the model.
@@ -412,11 +419,31 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     }
 
     /**
+     * Set the repository for the model.
+     */
+    public static function setRepository(string $repository): void
+    {
+        static::$repository = $repository;
+    }
+
+    /**
      * Create a new repository instance.
      */
     protected function newRepository(): Repository
     {
-        return new RedisRepository($this->getConnection());
+        return match ($repository = static::$repository) {
+            'array' => new ArrayRepository,
+            'redis' => new RedisRepository($this->getConnection()),
+            default => throw new InvalidArgumentException("Repository [{$repository}] is not supported."),
+        };
+    }
+
+    /**
+     * Resolve a connection instance.
+     */
+    public static function resolveRepository(?string $connection = null): Connection
+    {
+        return app(RedisManager::class)->connection($connection);
     }
 
     /**
