@@ -439,14 +439,6 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     }
 
     /**
-     * Resolve a connection instance.
-     */
-    public static function resolveRepository(?string $connection = null): Connection
-    {
-        return app(RedisManager::class)->connection($connection);
-    }
-
-    /**
      * Create a new Collection instance.
      */
     public function newCollection(): Collection
