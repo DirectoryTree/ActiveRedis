@@ -393,7 +393,28 @@ class AppServiceProvider extends ServiceProvider
 
 By default, models will use the default Redis connection defined in your Laravel configuration.
 
-To use a different connection, you may override the `connection` property on the model:
+It is recommended to define a separate connection for your ActiveRedis models in your `config/database.php` 
+file, as your default Redis connection will contain other data, such as jobs, cache, and sessions.
+
+This will make queries more efficient, as it will only need to scan over the keys owned by your models:
+
+```php
+return [
+    // ...
+    
+    'redis' => [
+        'activeredis' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'password' => env('REDIS_PASSWORD', null),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => '10',
+        ],
+    ],
+];
+```
+
+To use this connection, you may override the `connection` property on the model:
 
 ```php
 class Visit extends Model
@@ -401,7 +422,7 @@ class Visit extends Model
     /**
      * The Redis connection to use.
      */
-    protected ?string $connection = 'visits';
+    protected ?string $connection = 'activeredis';
 }
 ```
 
