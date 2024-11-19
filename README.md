@@ -690,7 +690,18 @@ This will allow you to test with your models without needing to interact with Re
 ```php
 use DirectoryTree\ActiveRedis\Model;
 
-Model::setRepository('array');
+// Pest
+beforeEach(function () {
+    Model::setRepository('array');
+});
+
+// PHPUnit
+protected function setUp(): void
+{
+    parent::setUp();
+
+    Model::setRepository('array');
+}
 ```
 
 Otherwise, you will need to run your tests with a Redis server running, and flush your Redis database after each test:
@@ -699,7 +710,9 @@ Otherwise, you will need to run your tests with a Redis server running, and flus
 use Illuminate\Support\Facades\Redis;
 
 // Pest
-beforeEach(fn () => Redis::flushdb());
+beforeEach(function () {
+    Redis::flushdb();
+});
 
 // PHPUnit
 protected function setUp(): void
