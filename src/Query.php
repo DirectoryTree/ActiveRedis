@@ -29,14 +29,14 @@ class Query
     /**
      * Find a model by its key.
      */
-    public function find(?string $id): ?Model
+    public function find(?string $id, int $chunk = 1000): ?Model
     {
         if (is_null($id)) {
             return null;
         }
 
         if (! empty($this->model->getSearchable())) {
-            return $this->whereKey($id)->first();
+            return $this->whereKey($id)->first($chunk);
         }
 
         if (! $this->cache->exists($hash = $this->model->getBaseHashWithKey($id))) {
@@ -49,9 +49,9 @@ class Query
     /**
      * Find a model by its key or call a callback.
      */
-    public function findOr(?string $id, Closure $callback): mixed
+    public function findOr(?string $id, Closure $callback, int $chunk = 1000): mixed
     {
-        if (! is_null($model = $this->find($id))) {
+        if (! is_null($model = $this->find($id, $chunk))) {
             return $model;
         }
 
@@ -61,9 +61,9 @@ class Query
     /**
      * Find a model by its key or throw an exception.
      */
-    public function findOrFail(?string $id): Model
+    public function findOrFail(?string $id, int $chunk = 1000): Model
     {
-        if (! $model = $this->find($id)) {
+        if (! $model = $this->find($id, $chunk)) {
             throw (new ModelNotFoundException)->setModel(get_class($this->model), $id);
         }
 
@@ -85,9 +85,9 @@ class Query
     /**
      * Create a new model or return the existing one.
      */
-    public function firstOrCreate(array $attributes = [], array $values = []): Model
+    public function firstOrCreate(array $attributes = [], array $values = [], int $chunk = 1000): Model
     {
-        if (! is_null($instance = (clone $this)->where($attributes)->first())) {
+        if (! is_null($instance = (clone $this)->where($attributes)->first($chunk))) {
             return $instance;
         }
 
@@ -97,9 +97,9 @@ class Query
     /**
      * Update a model or create a new one.
      */
-    public function updateOrCreate(array $attributes, array $values = [], bool $force = true): Model
+    public function updateOrCreate(array $attributes, array $values = [], bool $force = true, int $chunk = 1000): Model
     {
-        if (! is_null($instance = (clone $this)->where($attributes)->first())) {
+        if (! is_null($instance = (clone $this)->where($attributes)->first($chunk))) {
             $instance->fill($values)->save($force);
 
             return $instance;
@@ -168,7 +168,7 @@ class Query
     /**
      * Execute the query and get the first result.
      */
-    public function first(): ?Model
+    public function first(int $chunk = 1000): ?Model
     {
         $instance = null;
 
@@ -176,7 +176,7 @@ class Query
             $instance = $model;
 
             return false;
-        }, 1);
+        }, $chunk);
 
         return $instance;
     }
@@ -184,9 +184,9 @@ class Query
     /**
      * Execute the query and get the first result or throw an exception.
      */
-    public function firstOrFail(): Model
+    public function firstOrFail(int $chunk = 1000): Model
     {
-        if (! $model = $this->first()) {
+        if (! $model = $this->first($chunk)) {
             throw (new ModelNotFoundException)->setModel(get_class($this->model));
         }
 
@@ -208,17 +208,17 @@ class Query
     /**
      * Determine if any models exist for the current query.
      */
-    public function exists(): bool
+    public function exists(int $chunk = 1000): bool
     {
-        return $this->first() !== null;
+        return $this->first($chunk) !== null;
     }
 
     /**
      * Execute a callback over each item.
      */
-    public function each(Closure $callback, int $count = 1000): void
+    public function each(Closure $callback, int $chunk = 1000): void
     {
-        $this->chunk($count, function (Collection $models) use ($callback) {
+        $this->chunk($chunk, function (Collection $models) use ($callback) {
             foreach ($models as $key => $model) {
                 if ($callback($model, $key) === false) {
                     return false;
