@@ -196,13 +196,11 @@ class Query
     /**
      * Get all the models from the cache.
      */
-    public function get(): Collection
+    public function get(int $chunk = 1000): Collection
     {
         $models = $this->model->newCollection();
 
-        $this->each(
-            fn (Model $model) => $models->add($model)
-        );
+        $this->each(fn (Model $model) => $models->add($model), $chunk);
 
         return $models;
     }
@@ -218,7 +216,7 @@ class Query
     /**
      * Execute a callback over each item.
      */
-    public function each(Closure $callback, int $count = 100): void
+    public function each(Closure $callback, int $count = 1000): void
     {
         $this->chunk($count, function (Collection $models) use ($callback) {
             foreach ($models as $key => $model) {
