@@ -691,7 +691,7 @@ This will allow you to test with your models without needing to interact with Re
 use DirectoryTree\ActiveRedis\Model;
 
 // Pest
-beforeEach(function () {
+beforeAll(function () {
     Model::setRepository('array');
 });
 
