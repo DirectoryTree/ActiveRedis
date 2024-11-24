@@ -2,8 +2,8 @@
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelEnumStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCasts;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelEnumStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithCasts;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;

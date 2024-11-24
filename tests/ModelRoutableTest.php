@@ -1,6 +1,6 @@
 <?php
 
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub;
 
 it('is routable', function () {
     $model = ModelStub::create();

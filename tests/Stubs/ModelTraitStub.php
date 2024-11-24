@@ -1,6 +1,6 @@
 <?php
 
-namespace DirectoryTree\ActiveRedis\Tests\Fixtures;
+namespace DirectoryTree\ActiveRedis\Tests\Stubs;
 
 trait ModelTraitStub
 {

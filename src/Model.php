@@ -432,8 +432,8 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     protected function newRepository(): Repository
     {
         return match ($repository = static::$repository) {
-            'array' => new ArrayRepository,
-            'redis' => new RedisRepository($this->getConnection()),
+            'array' => app(ArrayRepository::class),
+            'redis' => app(RedisRepository::class, ['redis' => $this->getConnection()]),
             default => throw new InvalidArgumentException("Repository [{$repository}] is not supported."),
         };
     }

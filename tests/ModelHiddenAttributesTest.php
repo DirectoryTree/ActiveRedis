@@ -1,7 +1,7 @@
 <?php
 
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithHiddenAttributes;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithVisibleAttributes;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithHiddenAttributes;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithVisibleAttributes;
 
 it('does not include hidden attributes when transformed into array', function () {
     $model = new ModelStubWithHiddenAttributes([

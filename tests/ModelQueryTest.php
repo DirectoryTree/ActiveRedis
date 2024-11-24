@@ -2,9 +2,9 @@
 
 use DirectoryTree\ActiveRedis\Exceptions\ModelNotFoundException;
 use DirectoryTree\ActiveRedis\Query;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomPrefix;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithCustomKey;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithCustomPrefix;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;
 
@@ -64,11 +64,11 @@ it('does not throw exception when finding by existent key', function () {
 
 it('throws exception when finding by non-existent key', function () {
     ModelStub::findOrFail('invalid');
-})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub] invalid');
+})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub] invalid');
 
 it('throws exception when retrieving first of an empty query', function () {
     ModelStub::firstOrFail();
-})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub].');
+})->throws(ModelNotFoundException::class, 'No query results for model [DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub].');
 
 it('can create query', function () {
     expect(ModelStub::query())->toBeInstanceOf(Query::class);

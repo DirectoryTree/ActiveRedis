@@ -1,10 +1,10 @@
 <?php
 
 use DirectoryTree\ActiveRedis\Exceptions\AttributeNotSearchableException;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelEnumStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithSearchable;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelEnumStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithCustomKey;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithSearchable;
 
 it('generates query using where clauses', function () {
     $query = query(new ModelStubWithSearchable);
@@ -24,7 +24,7 @@ it('throws exception with where clause for attribute that is not searchable', fu
     $query = query(new ModelStub);
 
     $query->where('foo', '1');
-})->throws(AttributeNotSearchableException::class, 'The attribute [foo] is not searchable on the model [DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub].');
+})->throws(AttributeNotSearchableException::class, 'The attribute [foo] is not searchable on the model [DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub].');
 
 it('generates query using model prefix', function () {
     expect(query(new ModelStub)->getQuery())->toBe('model_stubs:id:*');

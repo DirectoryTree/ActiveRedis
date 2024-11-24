@@ -1,7 +1,7 @@
 <?php
 
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelObserverStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelObserverStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(function () {

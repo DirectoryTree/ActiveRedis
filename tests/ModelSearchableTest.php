@@ -1,6 +1,6 @@
 <?php
 
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithSearchable;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithSearchable;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(fn () => Redis::flushall());

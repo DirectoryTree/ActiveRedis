@@ -23,7 +23,7 @@ class Query
      */
     public function __construct(
         protected Model $model,
-        protected Repository $cache,
+        protected Repository $repository,
     ) {}
 
     /**
@@ -39,7 +39,7 @@ class Query
             return $this->whereKey($id)->first($chunk);
         }
 
-        if (! $this->cache->exists($hash = $this->model->getBaseHashWithKey($id))) {
+        if (! $this->repository->exists($hash = $this->model->getBaseHashWithKey($id))) {
             return null;
         }
 
@@ -232,7 +232,7 @@ class Query
      */
     public function chunk(int $count, Closure $callback): void
     {
-        foreach ($this->cache->chunk($this->getQuery(), $count) as $chunk) {
+        foreach ($this->repository->chunk($this->getQuery(), $count) as $chunk) {
             $models = $this->model->newCollection();
 
             foreach ($chunk as $hash) {
@@ -251,7 +251,7 @@ class Query
     protected function newModelFromHash(string $hash): Model
     {
         return $this->model->newFromBuilder([
-            ...$this->cache->getAttributes($hash),
+            ...$this->repository->getAttributes($hash),
             $this->model->getKeyName() => $this->getKeyValue($hash),
         ]);
     }
@@ -287,17 +287,33 @@ class Query
     }
 
     /**
+     * Get the model instance.
+     */
+    public function getModel(): Model
+    {
+        return $this->model;
+    }
+
+    /**
+     * Get the repository instance.
+     */
+    public function getRepository(): Repository
+    {
+        return $this->repository;
+    }
+
+    /**
      * Insert or update a record in the cache.
      */
     public function insertOrUpdate(string $hash, array $attributes = []): void
     {
-        $this->cache->transaction(function () use ($hash, $attributes) {
+        $this->repository->transaction(function () use ($hash, $attributes) {
             if (! empty($delete = array_keys($attributes, null, true))) {
-                $this->cache->deleteAttributes($hash, $delete);
+                $this->repository->deleteAttributes($hash, $delete);
             }
 
             if (! empty($update = array_diff_key($attributes, array_flip($delete)))) {
-                $this->cache->setAttributes($hash, $update);
+                $this->repository->setAttributes($hash, $update);
             }
         });
     }
@@ -307,7 +323,7 @@ class Query
      */
     public function expire(string $hash, int $seconds): void
     {
-        $this->cache->setExpiry($hash, $seconds);
+        $this->repository->setExpiry($hash, $seconds);
     }
 
     /**
@@ -315,7 +331,7 @@ class Query
      */
     public function expiry(string $hash): ?int
     {
-        return $this->cache->getExpiry($hash);
+        return $this->repository->getExpiry($hash);
     }
 
     /**
@@ -323,6 +339,6 @@ class Query
      */
     public function destroy(string $hash): void
     {
-        $this->cache->delete($hash);
+        $this->repository->delete($hash);
     }
 }

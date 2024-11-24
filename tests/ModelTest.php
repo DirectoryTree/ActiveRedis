@@ -3,9 +3,9 @@
 use Carbon\Carbon;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStub;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithCustomKey;
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithSearchable;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStub;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithCustomKey;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithSearchable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Redis;
 

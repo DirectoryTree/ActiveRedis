@@ -1,6 +1,6 @@
 <?php
 
-use DirectoryTree\ActiveRedis\Tests\Fixtures\ModelStubWithEventListeners;
+use DirectoryTree\ActiveRedis\Tests\Stubs\ModelStubWithEventListeners;
 use Illuminate\Support\Facades\Redis;
 
 beforeEach(function () {
