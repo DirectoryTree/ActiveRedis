@@ -13,24 +13,20 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ ubuntu-latest ]
-                php: [ 8.3, 8.2, 8.1 ]
-                laravel: [ 11.*, 10.*, 9.* ]
                 redis-client: [ phpredis, predis ]
-                dependency-version: [ prefer-stable ]
                 include:
-                    -   redis-client: phpredis
-                        php-extensions: redis
-                    -   laravel: 11.*
+                    -   php: 8.4
+                        laravel: 12.*
+                        testbench: 10.*
+                    -   php: 8.3
+                        laravel: 11.*
                         testbench: 9.*
-                    -   laravel: 10.*
+                    -   php: 8.2
+                        laravel: 10.*
                         testbench: 8.*
-                    -   laravel: 9.*
+                    -   php: 8.1
+                        laravel: 9.*
                         testbench: 7.*
-                exclude:
-                    -   laravel: 11.*
-                        php: 8.1
-                    -   laravel: 9.*
-                        php: 8.3
 
         services:
             redis:
@@ -39,7 +35,7 @@ jobs:
                     - 6379:6379
                 options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-        name: ${{ matrix.os }} - P${{ matrix.php }} - L${{ matrix.laravel }} (${{ matrix.redis-client }}) - ${{ matrix.dependency-version }}
+        name: ${{ matrix.os }} - P${{ matrix.php }} - L${{ matrix.laravel }} (${{ matrix.redis-client }})
 
         steps:
             -   name: Checkout code
@@ -60,7 +56,7 @@ jobs:
             -   name: Install dependencies
                 run: |
                     composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update --dev
-                    composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+                    composer update --prefer-stable --prefer-dist --no-interaction
 
             -   name: Execute tests
                 run: vendor/bin/pest
