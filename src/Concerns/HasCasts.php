@@ -344,7 +344,7 @@ trait HasCasts
     /**
      * Return a timestamp as DateTime object with time set to 00:00:00.
      */
-    protected function asDate(mixed $value): Carbon
+    protected function asDate(mixed $value): CarbonInterface
     {
         return $this->asDateTime($value)->startOfDay();
     }
@@ -352,7 +352,7 @@ trait HasCasts
     /**
      * Return a timestamp as DateTime object.
      */
-    protected function asDateTime(mixed $value): Carbon
+    protected function asDateTime(mixed $value): CarbonInterface
     {
         if ($value instanceof CarbonInterface) {
             return Date::instance($value);
