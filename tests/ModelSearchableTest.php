@@ -149,3 +149,32 @@ it('can first or create with searchable attribute', function () {
     expect($retrieved->user_id)->toBe('1');
     expect($retrieved->name)->toBe('John Doe');
 });
+
+it('can update or create', function () {
+    $model = ModelStubWithSearchable::updateOrCreate([
+        'user_id' => '123',
+    ], [
+        'company_id' => '456',
+    ]);
+
+    expect($model->getHashKey())->toBe("model_stub_with_searchables:id:{$model->getKey()}:company_id:456:user_id:123");
+
+    $model = ModelStubWithSearchable::updateOrCreate([
+        'user_id' => '123',
+    ], [
+        'company_id' => '789',
+    ]);
+
+    expect($model->getHashKey())->toBe("model_stub_with_searchables:id:{$model->getKey()}:company_id:789:user_id:123");
+    expect(ModelStubWithSearchable::get())->toHaveCount(1);
+});
+
+it('can update or create with empty values', function () {
+    $model = ModelStubWithSearchable::updateOrCreate([
+        'user_id' => '',
+    ], [
+        'company_id' => '',
+    ]);
+
+    expect($model->getHashKey())->toBe("model_stub_with_searchables:id:{$model->getKey()}:company_id:null:user_id:null");
+});
