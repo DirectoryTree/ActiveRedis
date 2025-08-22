@@ -219,17 +219,18 @@ class IndexedRedisRepository implements Repository
      */
     public function delete(string $hash): void
     {
-        $this->cleanupIndexes($hash);
+        // Get attributes BEFORE deleting the hash so we can clean up indexes
+        $attributes = $this->getAttributes($hash);
+        $this->cleanupIndexes($hash, $attributes);
         $this->baseRepository->delete($hash);
     }
 
     /**
      * Clean up secondary indexes when deleting a hash.
      */
-    protected function cleanupIndexes(string $hash): void
+    protected function cleanupIndexes(string $hash, array $attributes): void
     {
-        // Get all attributes to clean up attribute-specific indexes
-        $attributes = $this->getAttributes($hash);
+        // Use provided attributes to clean up attribute-specific indexes
         
         // Get model name using same logic as updateIndexes
         $parts = explode(':', $hash);
