@@ -15,6 +15,8 @@ use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
 use DirectoryTree\ActiveRedis\Repositories\ArrayRepository;
+use DirectoryTree\ActiveRedis\Repositories\ClusterRedisRepository;
+use DirectoryTree\ActiveRedis\Repositories\IndexedRedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Illuminate\Contracts\Redis\Connection;
@@ -434,6 +436,8 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
         return match ($repository = static::$repository) {
             'array' => app(ArrayRepository::class),
             'redis' => app(RedisRepository::class, ['redis' => $this->getConnection()]),
+            'cluster' => app(ClusterRedisRepository::class, ['redis' => $this->getConnection()]),
+            'indexed' => app(IndexedRedisRepository::class, ['redis' => $this->getConnection()]),
             default => throw new InvalidArgumentException("Repository [{$repository}] is not supported."),
         };
     }
