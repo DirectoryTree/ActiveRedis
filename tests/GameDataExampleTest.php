@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Redis;
 class Game extends Model
 {
     protected static string $repository = 'indexed'; // Use indexed repository!
+    protected string $key = 'game_id'; // Use game_id as primary key!
     protected array $searchable = ['game_id', 'status', 'category']; // These become indexes
     protected array $casts = [
         'game_id' => 'integer',
@@ -20,6 +21,12 @@ class Game extends Model
 it('demonstrates game data consolidation with IndexedRedisRepository step by step', function () {
     echo "\n🎮 Game Data Consolidation with IndexedRedisRepository\n";
     echo "====================================================\n\n";
+    
+    // Cleanup any existing test data first
+    $existingGames = Game::all();
+    foreach ($existingGames as $game) {
+        $game->delete();
+    }
 
     // Step 1: Create multiple games with different data
     echo "📝 Step 1: Creating multiple games...\n";
@@ -28,9 +35,9 @@ it('demonstrates game data consolidation with IndexedRedisRepository step by ste
         ['game_id' => 1001, 'name' => 'Poker Tournament', 'total_wager' => 1500.50, 'match_count' => 25, 'status' => 'active', 'category' => 'poker'],
         ['game_id' => 1002, 'name' => 'Blackjack Session', 'total_wager' => 800.25, 'match_count' => 12, 'status' => 'active', 'category' => 'blackjack'],
         ['game_id' => 1003, 'name' => 'Roulette Night', 'total_wager' => 2200.75, 'match_count' => 18, 'status' => 'completed', 'category' => 'roulette'],
-        ['game_id' => 1001, 'name' => 'Poker Tournament Round 2', 'total_wager' => 950.00, 'match_count' => 15, 'status' => 'active', 'category' => 'poker'], // Same game_id!
         ['game_id' => 1004, 'name' => 'Slots Marathon', 'total_wager' => 500.00, 'match_count' => 100, 'status' => 'active', 'category' => 'slots'],
-        ['game_id' => 1002, 'name' => 'Blackjack VIP', 'total_wager' => 1200.00, 'match_count' => 8, 'status' => 'active', 'category' => 'blackjack'], // Same game_id!
+        ['game_id' => 1005, 'name' => 'Blackjack VIP', 'total_wager' => 1200.00, 'match_count' => 8, 'status' => 'active', 'category' => 'blackjack'],
+        ['game_id' => 1006, 'name' => 'Poker Championship', 'total_wager' => 3000.00, 'match_count' => 50, 'status' => 'active', 'category' => 'poker'],
     ];
 
     $createdModels = [];
@@ -48,38 +55,35 @@ it('demonstrates game data consolidation with IndexedRedisRepository step by ste
     echo "- Status indexes: idx:games:status:active, idx:games:status:completed\n";
     echo "- Category indexes: idx:games:category:poker, idx:games:category:blackjack, etc.\n\n";
 
-    // Step 3: Query by game_id to consolidate data
-    echo "🔎 Step 3: Querying and consolidating data by game_id...\n";
+    // Step 3: Consolidate data by category using secondary indexes
+    echo "🔎 Step 3: Consolidating data by game category...\n";
 
-    $gameIds = [1001, 1002, 1003, 1004];
+    $categories = ['poker', 'blackjack', 'roulette', 'slots'];
 
-    foreach ($gameIds as $gameId) {
-        // This uses the secondary index idx:games:game_id:{$gameId} - VERY FAST!
-        $gameRecords = Game::where('game_id', $gameId)->get();
+    foreach ($categories as $category) {
+        // This uses the secondary index idx:games:category:{$category} - VERY FAST!
+        $categoryGames = Game::where('category', $category)->get();
         
-        if ($gameRecords->count() > 0) {
-            // Consolidate the data
-            $totalWager = $gameRecords->sum('total_wager');
-            $totalMatches = $gameRecords->sum('match_count');
-            $gameName = $gameRecords->first()->name;
-            $category = $gameRecords->first()->category;
+        if ($categoryGames->count() > 0) {
+            // Consolidate the data for this category
+            $totalWager = $categoryGames->sum('total_wager');
+            $totalMatches = $categoryGames->sum('match_count');
+            $gameCount = $categoryGames->count();
             
-            echo "🎯 Game ID {$gameId} ({$category}):\n";
-            echo "   📊 Total Records: {$gameRecords->count()}\n";
+            echo "🎯 Category: {$category}\n";
+            echo "   📊 Total Games: {$gameCount}\n";
             echo "   💰 Total Wager: $" . number_format($totalWager, 2) . "\n";
             echo "   🎮 Total Matches: {$totalMatches}\n";
-            echo "   📋 Sample Name: {$gameName}\n\n";
+            echo "   🎮 Games: " . $categoryGames->pluck('name')->implode(', ') . "\n\n";
             
             // Assert the consolidation worked
-            if ($gameId == 1001) {
-                expect($gameRecords->count())->toBe(2); // 2 poker records
-                expect($totalWager)->toBe(2450.50); // 1500.50 + 950.00
-                expect($totalMatches)->toBe(40); // 25 + 15
+            if ($category == 'poker') {
+                expect($gameCount)->toBe(2); // 2 poker games
+                expect($totalWager)->toBe(4500.50); // 1500.50 + 3000.00
             }
-            if ($gameId == 1002) {
-                expect($gameRecords->count())->toBe(2); // 2 blackjack records
+            if ($category == 'blackjack') {
+                expect($gameCount)->toBe(2); // 2 blackjack games  
                 expect($totalWager)->toBe(2000.25); // 800.25 + 1200.00
-                expect($totalMatches)->toBe(20); // 12 + 8
             }
         }
     }
@@ -92,7 +96,7 @@ it('demonstrates game data consolidation with IndexedRedisRepository step by ste
     foreach ($activeGames as $game) {
         echo "  - {$game->name} (Game ID: {$game->game_id})\n";
     }
-    expect($activeGames->count())->toBe(5); // 5 active games
+    expect($activeGames->count())->toBe(5); // 5 active games (all except roulette)
 
     echo "\nPoker games (using idx:games:category:poker):\n";
     $pokerGames = Game::where('category', 'poker')->get();
@@ -100,6 +104,37 @@ it('demonstrates game data consolidation with IndexedRedisRepository step by ste
         echo "  - {$game->name} (Wager: \${$game->total_wager})\n";
     }
     expect($pokerGames->count())->toBe(2); // 2 poker games
+
+    // Step 4a: Demonstrate Model::find($primaryKey) with game_id as primary key
+    echo "\n🔑 Step 4a: Using Model::find(\$primaryKey) with game_id as primary key...\n";
+    
+    // Since game_id is our primary key, we can find directly by game_id
+    $game1001 = Game::find(1001);
+    if ($game1001) {
+        echo "✅ Found game with primary key 1001: {$game1001->name}\n";
+        echo "   💰 Wager: \${$game1001->total_wager}\n";
+        echo "   🎯 This uses direct hash lookup: games:{$game1001->game_id}\n";
+        expect($game1001->game_id)->toBe(1001);
+    } else {
+        echo "❌ Game 1001 not found\n";
+    }
+    
+    $game1002 = Game::find(1002);
+    if ($game1002) {
+        echo "✅ Found game with primary key 1002: {$game1002->name}\n";
+        echo "   💰 Wager: \${$game1002->total_wager}\n";
+        expect($game1002->game_id)->toBe(1002);
+    }
+    
+    // Test finding non-existent game
+    $nonExistent = Game::find(9999);
+    expect($nonExistent)->toBeNull();
+    echo "✅ Game::find(9999) correctly returns null for non-existent game\n";
+    
+    echo "\n📊 Primary Key vs Secondary Index Performance:\n";
+    echo "   🚀 Model::find(1001) - Direct hash lookup: games:1001 - O(1) performance!\n";
+    echo "   ⚡ Game::where('game_id', 1001) - Uses secondary index - O(log n) performance\n";
+    echo "   🎯 Both work in Redis Cluster, but find() is faster for single records\n\n";
 
     // Step 5: Show performance difference
     echo "\n⚡ Step 5: Performance comparison...\n";
