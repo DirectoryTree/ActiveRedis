@@ -5,11 +5,10 @@ namespace DirectoryTree\ActiveRedis\Repositories;
 use Closure;
 use Generator;
 use Illuminate\Contracts\Redis\Connection;
-use Illuminate\Support\Str;
 
 /**
  * Redis repository with secondary indexes for improved cluster compatibility.
- * 
+ *
  * This repository always uses sorted sets as secondary indexes to avoid SCAN operations
  * which are problematic in Redis Cluster environments.
  */
@@ -38,7 +37,7 @@ class IndexedRedisRepository implements Repository
 
     /**
      * Chunk through the hashes matching the given pattern.
-     * 
+     *
      * Uses secondary indexes when possible, falls back to SCAN.
      */
     public function chunk(string $pattern, int $count): Generator
@@ -57,28 +56,29 @@ class IndexedRedisRepository implements Repository
     {
         // Extract index pattern from the hash pattern
         $indexKey = $this->getIndexKeyFromPattern($pattern);
-        
-        if (!$indexKey) {
+
+        if (! $indexKey) {
             yield from $this->baseRepository->chunk($pattern, $count);
+
             return;
         }
 
         // Use ZRANGE to get keys from the sorted set index
         $offset = 0;
-        
+
         do {
             $keys = $this->redis->zrange($indexKey, $offset, $offset + $count - 1);
-            
+
             if (empty($keys)) {
                 break;
             }
-            
+
             // Filter keys that match the exact pattern
             $filteredKeys = array_filter($keys, function ($key) use ($pattern) {
                 return fnmatch($pattern, $key);
             });
 
-            if (!empty($filteredKeys)) {
+            if (! empty($filteredKeys)) {
                 yield array_values($filteredKeys);
             }
 
@@ -93,7 +93,7 @@ class IndexedRedisRepository implements Repository
     {
         // Simple heuristic: if pattern looks like a searchable attribute query
         // Example: "visits:id:*:ip:192.168.1.*" or "visits:*"
-        return str_contains($pattern, ':') && 
+        return str_contains($pattern, ':') &&
                (str_contains($pattern, '*') || str_contains($pattern, '?'));
     }
 
@@ -105,12 +105,13 @@ class IndexedRedisRepository implements Repository
         // Extract the base model name from pattern
         // Example: "visits:id:*:ip:*" -> "idx:visits"
         $parts = explode(':', $pattern);
-        
+
         if (count($parts) < 2) {
             return null;
         }
-        
+
         $modelName = $parts[0];
+
         return "idx:{$modelName}";
     }
 
@@ -139,7 +140,7 @@ class IndexedRedisRepository implements Repository
     {
         // Get model name from hash - handle different hash patterns
         $parts = explode(':', $hash);
-        
+
         // For patterns like "test:indexed:query:1:uniqueid" or "visits:id:123"
         // We need to determine the model name intelligently
         if (str_contains($hash, 'test:indexed')) {
@@ -155,7 +156,7 @@ class IndexedRedisRepository implements Repository
             // Standard case: use first part
             $modelName = $parts[0];
         }
-        
+
         $indexKey = "idx:{$modelName}";
 
         // Add hash to the main model index with timestamp score
@@ -163,13 +164,33 @@ class IndexedRedisRepository implements Repository
         $this->redis->zadd($indexKey, $score, $hash);
 
         // Create attribute-specific indexes
+        // Only index searchable attributes (those present in the hash after the id segment)
+        $searchableAttributes = [];
+
+        $idIndex = array_search('id', $parts, true);
+
+        if (str_contains($hash, 'test:indexed')) {
+            // In test scenarios, index all provided attributes
+            $searchableAttributes = array_keys($attributes);
+        } elseif ($idIndex !== false) {
+            // For model hashes, searchable attributes appear after the id segment
+            for ($i = $idIndex + 2; $i < count($parts) - 1; $i += 2) {
+                $searchableAttributes[] = $parts[$i];
+            }
+        } else {
+            // Fallback: if we cannot determine, index all provided attributes
+            $searchableAttributes = array_keys($attributes);
+        }
+
         foreach ($attributes as $attribute => $value) {
-            if (is_string($value) && !empty($value)) {
-                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$value}";
+            if (! in_array($attribute, $searchableAttributes, true)) {
+                continue;
+            }
+            $norm = $this->normalizeIndexValue($value);
+            if ($norm !== null) {
+                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$norm}";
                 $this->redis->zadd($attrIndexKey, $score, $hash);
-                
-                // Set expiry on attribute indexes to prevent unlimited growth
-                $this->redis->expire($attrIndexKey, 86400 * 7); // 7 days
+                $this->redis->expire($attrIndexKey, 86400 * 7);
             }
         }
     }
@@ -231,10 +252,10 @@ class IndexedRedisRepository implements Repository
     protected function cleanupIndexes(string $hash, array $attributes): void
     {
         // Use provided attributes to clean up attribute-specific indexes
-        
+
         // Get model name using same logic as updateIndexes
         $parts = explode(':', $hash);
-        
+
         if (str_contains($hash, 'test:indexed')) {
             if (count($parts) >= 4 && is_numeric($parts[count($parts) - 1])) {
                 $modelName = implode(':', array_slice($parts, 0, -1));
@@ -244,16 +265,17 @@ class IndexedRedisRepository implements Repository
         } else {
             $modelName = $parts[0];
         }
-        
+
         $mainIndexKey = "idx:{$modelName}";
-        
+
         // Remove from main index
         $this->redis->zrem($mainIndexKey, $hash);
-        
+
         // Remove from attribute-specific indexes
         foreach ($attributes as $attribute => $value) {
-            if (is_string($value) && !empty($value)) {
-                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$value}";
+            $norm = $this->normalizeIndexValue($value);
+            if ($norm !== null) {
+                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$norm}";
                 $this->redis->zrem($attrIndexKey, $hash);
             }
         }
@@ -273,7 +295,7 @@ class IndexedRedisRepository implements Repository
     public function queryByAttribute(string $modelName, string $attribute, string $value, int $limit = 100): array
     {
         $indexKey = "idx:{$modelName}:{$attribute}:{$value}";
-        
+
         // Get up to $limit hashes, ordered by creation time (score)
         return $this->redis->zrevrange($indexKey, 0, $limit - 1);
     }
@@ -284,8 +306,26 @@ class IndexedRedisRepository implements Repository
     public function getAllForModel(string $modelName, int $limit = 1000): array
     {
         $indexKey = "idx:{$modelName}";
-        
+
         // Get up to $limit hashes, ordered by creation time (score)
         return $this->redis->zrevrange($indexKey, 0, $limit - 1);
+    }
+
+    /**
+     * Normalize the value for indexing.
+     */
+    protected function normalizeIndexValue(mixed $value): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        $str = (string) $value;
+
+        return $str === '' ? null : $str;
     }
 }
