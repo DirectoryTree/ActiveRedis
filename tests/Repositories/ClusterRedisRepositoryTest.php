@@ -122,7 +122,6 @@ it('can chunk through hashes matching a pattern', function () {
     $prefix = 'test:cluster:chunk:'.uniqid();
     $hashes = [];
 
-    // Create test hashes across different slots
     for ($i = 1; $i <= 5; $i++) {
         $hash = $prefix.':'.$i;
         $hashes[] = $hash;
@@ -134,12 +133,10 @@ it('can chunk through hashes matching a pattern', function () {
         $found = array_merge($found, $chunk);
     }
 
-    // Clean up
     foreach ($hashes as $hash) {
         $redis->del($hash);
     }
 
-    // Should find all keys with normal Redis
     expect(count($found))->toBe(5);
 });
 
@@ -147,7 +144,6 @@ it('can perform transactions in cluster (same slot)', function () {
     $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
-    // Use hash tags to ensure keys are in the same slot
     $hash1 = 'test:cluster:{same}:trans1:'.uniqid();
     $hash2 = 'test:cluster:{same}:trans2:'.uniqid();
 
@@ -159,7 +155,6 @@ it('can perform transactions in cluster (same slot)', function () {
     expect($repository->getAttribute($hash1, 'field1'))->toBe('value1');
     expect($repository->getAttribute($hash2, 'field2'))->toBe('value2');
 
-    // Clean up
     $redis->del($hash1);
     $redis->del($hash2);
 });

@@ -1,36 +1,211 @@
 <?php
 
-namespace DirectoryTree\ActiveRedis\Tests;
-
-use DirectoryTree\ActiveRedis\Model;
+use DirectoryTree\ActiveRedis\Tests\Stubs\GameStub;
 use Illuminate\Support\Facades\Redis;
 
-// Game model for data consolidation example
-class Game extends Model
-{
-    protected static string $repository = 'indexed'; // Use indexed repository!
-    protected string $key = 'game_id'; // Use game_id as primary key!
-    protected array $searchable = ['game_id', 'status', 'category']; // These become indexes
-    protected array $casts = [
-        'game_id' => 'integer',
-        'total_wager' => 'float',
-        'match_count' => 'integer',
-    ];
-}
+beforeEach(fn () => Redis::flushall());
 
-it('demonstrates game data consolidation with IndexedRedisRepository step by step', function () {
-    echo "\n🎮 Game Data Consolidation with IndexedRedisRepository\n";
-    echo "====================================================\n\n";
-    
-    // Cleanup any existing test data first
-    $existingGames = Game::all();
-    foreach ($existingGames as $game) {
-        $game->delete();
-    }
+it('can create games with indexed repository', function () {
+    $game = GameStub::create([
+        'game_id' => 1001,
+        'name' => 'Poker Tournament',
+        'total_wager' => 1500.50,
+        'match_count' => 25,
+        'status' => 'active',
+        'category' => 'poker',
+    ]);
 
-    // Step 1: Create multiple games with different data
-    echo "📝 Step 1: Creating multiple games...\n";
+    expect($game->exists)->toBeTrue();
+    expect($game->game_id)->toBe(1001);
+    expect($game->name)->toBe('Poker Tournament');
+    expect($game->total_wager)->toBe(1500.50);
+    expect($game->match_count)->toBe(25);
+    expect($game->status)->toBe('active');
+    expect($game->category)->toBe('poker');
+});
 
+it('can find games by primary key game_id', function () {
+    $game = GameStub::create([
+        'game_id' => 1001,
+        'name' => 'Poker Tournament',
+        'total_wager' => 1500.50,
+        'status' => 'active',
+        'category' => 'poker',
+    ]);
+
+    $found = GameStub::find(1001);
+
+    expect($found)->not->toBeNull();
+    expect($found->is($game))->toBeTrue();
+    expect($found->game_id)->toBe(1001);
+    expect($found->name)->toBe('Poker Tournament');
+});
+
+it('returns null when finding non-existent game', function () {
+    $game = GameStub::find(9999);
+
+    expect($game)->toBeNull();
+});
+
+it('can query games by searchable category attribute', function () {
+    GameStub::create(['game_id' => 1001, 'name' => 'Poker Game', 'category' => 'poker']);
+    GameStub::create(['game_id' => 1002, 'name' => 'Blackjack Game', 'category' => 'blackjack']);
+    GameStub::create(['game_id' => 1003, 'name' => 'Another Poker', 'category' => 'poker']);
+
+    $pokerGames = GameStub::where('category', 'poker')->get();
+    $blackjackGames = GameStub::where('category', 'blackjack')->get();
+
+    expect($pokerGames->count())->toBe(2);
+    expect($blackjackGames->count())->toBe(1);
+    expect($pokerGames->pluck('name')->toArray())->toContain('Poker Game', 'Another Poker');
+});
+
+it('can query games by searchable status attribute', function () {
+    GameStub::create(['game_id' => 1001, 'name' => 'Game 1', 'status' => 'active']);
+    GameStub::create(['game_id' => 1002, 'name' => 'Game 2', 'status' => 'completed']);
+    GameStub::create(['game_id' => 1003, 'name' => 'Game 3', 'status' => 'active']);
+
+    $activeGames = GameStub::where('status', 'active')->get();
+    $completedGames = GameStub::where('status', 'completed')->get();
+
+    expect($activeGames->count())->toBe(2);
+    expect($completedGames->count())->toBe(1);
+    expect($completedGames->first()->name)->toBe('Game 2');
+});
+
+it('can query games by searchable game_id attribute', function () {
+    GameStub::create(['game_id' => 1001, 'name' => 'Game 1001']);
+    GameStub::create(['game_id' => 1002, 'name' => 'Game 1002']);
+
+    $game = GameStub::where('game_id', 1001)->first();
+
+    expect($game)->not->toBeNull();
+    expect($game->name)->toBe('Game 1001');
+    expect($game->game_id)->toBe(1001);
+});
+
+it('can update games and maintain indexes', function () {
+    $game = GameStub::create([
+        'game_id' => 1001,
+        'name' => 'Poker Game',
+        'total_wager' => 1000.00,
+        'status' => 'active',
+        'category' => 'poker',
+    ]);
+
+    $game->update([
+        'total_wager' => 1500.00,
+        'status' => 'completed',
+    ]);
+
+    expect($game->total_wager)->toBe(1500.00);
+    expect($game->status)->toBe('completed');
+
+    $activeGames = GameStub::where('status', 'active')->get();
+    $completedGames = GameStub::where('status', 'completed')->get();
+
+    expect($activeGames->count())->toBe(0);
+    expect($completedGames->count())->toBe(1);
+    expect($completedGames->first()->is($game))->toBeTrue();
+});
+
+it('can delete games and clean up indexes', function () {
+    $game1 = GameStub::create(['game_id' => 1001, 'status' => 'active', 'category' => 'poker']);
+    $game2 = GameStub::create(['game_id' => 1002, 'status' => 'active', 'category' => 'poker']);
+
+    expect(GameStub::where('category', 'poker')->get())->toHaveCount(2);
+
+    $game1->delete();
+
+    expect(GameStub::where('category', 'poker')->get())->toHaveCount(1);
+    expect(GameStub::find(1001))->toBeNull();
+    expect(GameStub::find(1002))->not->toBeNull();
+});
+
+it('can consolidate data by category using indexed queries', function () {
+    GameStub::create(['game_id' => 1001, 'total_wager' => 1500.50, 'match_count' => 25, 'category' => 'poker']);
+    GameStub::create(['game_id' => 1002, 'total_wager' => 800.25, 'match_count' => 12, 'category' => 'blackjack']);
+    GameStub::create(['game_id' => 1003, 'total_wager' => 3000.00, 'match_count' => 50, 'category' => 'poker']);
+    GameStub::create(['game_id' => 1004, 'total_wager' => 1200.00, 'match_count' => 8, 'category' => 'blackjack']);
+
+    $pokerGames = GameStub::where('category', 'poker')->get();
+    $pokerTotalWager = $pokerGames->sum('total_wager');
+    $pokerTotalMatches = $pokerGames->sum('match_count');
+
+    expect($pokerGames->count())->toBe(2);
+    expect($pokerTotalWager)->toBe(4500.50);
+    expect($pokerTotalMatches)->toBe(75);
+
+    $blackjackGames = GameStub::where('category', 'blackjack')->get();
+    $blackjackTotalWager = $blackjackGames->sum('total_wager');
+    $blackjackTotalMatches = $blackjackGames->sum('match_count');
+
+    expect($blackjackGames->count())->toBe(2);
+    expect($blackjackTotalWager)->toBe(2000.25);
+    expect($blackjackTotalMatches)->toBe(20);
+});
+
+it('can use first or create with searchable attributes', function () {
+    $game = GameStub::firstOrCreate([
+        'category' => 'poker',
+        'status' => 'active',
+    ], [
+        'game_id' => 1001,
+        'name' => 'Poker Tournament',
+        'total_wager' => 1500.00,
+    ]);
+
+    expect($game->game_id)->toBe(1001);
+    expect($game->name)->toBe('Poker Tournament');
+    expect($game->category)->toBe('poker');
+    expect($game->status)->toBe('active');
+
+    $retrieved = GameStub::firstOrCreate([
+        'category' => 'poker',
+        'status' => 'active',
+    ], [
+        'game_id' => 1002,
+        'name' => 'Different Name',
+        'total_wager' => 2000.00,
+    ]);
+
+    expect($retrieved->is($game))->toBeTrue();
+    expect($retrieved->game_id)->toBe(1001);
+    expect($retrieved->name)->toBe('Poker Tournament');
+});
+
+it('can use update or create with searchable attributes', function () {
+    $game = GameStub::updateOrCreate([
+        'game_id' => 1001,
+    ], [
+        'name' => 'Poker Tournament',
+        'category' => 'poker',
+        'status' => 'active',
+    ]);
+
+    expect($game->name)->toBe('Poker Tournament');
+    expect($game->category)->toBe('poker');
+    expect($game->game_id)->toBe(1001);
+
+    $updated = GameStub::updateOrCreate([
+        'game_id' => 1001,
+    ], [
+        'name' => 'Updated Poker Tournament',
+        'category' => 'poker',
+        'status' => 'completed',
+    ]);
+
+    expect($updated->game_id)->toBe(1001);
+    expect($updated->name)->toBe('Updated Poker Tournament');
+    expect($updated->status)->toBe('completed');
+    expect(GameStub::get())->toHaveCount(1);
+
+    $fresh = GameStub::find(1001);
+    expect($fresh->name)->toBe('Updated Poker Tournament');
+    expect($fresh->status)->toBe('completed');
+});
+
+it('demonstrates comprehensive game data consolidation workflow', function () {
     $games = [
         ['game_id' => 1001, 'name' => 'Poker Tournament', 'total_wager' => 1500.50, 'match_count' => 25, 'status' => 'active', 'category' => 'poker'],
         ['game_id' => 1002, 'name' => 'Blackjack Session', 'total_wager' => 800.25, 'match_count' => 12, 'status' => 'active', 'category' => 'blackjack'],
@@ -40,199 +215,69 @@ it('demonstrates game data consolidation with IndexedRedisRepository step by ste
         ['game_id' => 1006, 'name' => 'Poker Championship', 'total_wager' => 3000.00, 'match_count' => 50, 'status' => 'active', 'category' => 'poker'],
     ];
 
-    $createdModels = [];
     foreach ($games as $gameData) {
-        $game = Game::create($gameData);
-        $createdModels[] = $game;
-        
-        echo "✅ Created: {$game->name} (ID: {$game->game_id}) - Wager: \${$game->total_wager}, Matches: {$game->match_count}\n";
+        GameStub::create($gameData);
     }
-
-    echo "\n🔍 Step 2: Behind the scenes - What indexes were created automatically...\n";
-    echo "The IndexedRedisRepository automatically created these Redis indexes:\n";
-    echo "- Main index: idx:games (all game records)\n";
-    echo "- Game ID indexes: idx:games:game_id:1001, idx:games:game_id:1002, etc.\n";
-    echo "- Status indexes: idx:games:status:active, idx:games:status:completed\n";
-    echo "- Category indexes: idx:games:category:poker, idx:games:category:blackjack, etc.\n\n";
-
-    // Step 3: Consolidate data by category using secondary indexes
-    echo "🔎 Step 3: Consolidating data by game category...\n";
 
     $categories = ['poker', 'blackjack', 'roulette', 'slots'];
 
     foreach ($categories as $category) {
-        // This uses the secondary index idx:games:category:{$category} - VERY FAST!
-        $categoryGames = Game::where('category', $category)->get();
-        
+        $categoryGames = GameStub::where('category', $category)->get();
+
         if ($categoryGames->count() > 0) {
-            // Consolidate the data for this category
             $totalWager = $categoryGames->sum('total_wager');
             $totalMatches = $categoryGames->sum('match_count');
             $gameCount = $categoryGames->count();
-            
-            echo "🎯 Category: {$category}\n";
-            echo "   📊 Total Games: {$gameCount}\n";
-            echo "   💰 Total Wager: $" . number_format($totalWager, 2) . "\n";
-            echo "   🎮 Total Matches: {$totalMatches}\n";
-            echo "   🎮 Games: " . $categoryGames->pluck('name')->implode(', ') . "\n\n";
-            
-            // Assert the consolidation worked
+
             if ($category == 'poker') {
-                expect($gameCount)->toBe(2); // 2 poker games
-                expect($totalWager)->toBe(4500.50); // 1500.50 + 3000.00
+                expect($gameCount)->toBe(2);
+                expect($totalWager)->toBe(4500.50);
+                expect($totalMatches)->toBe(75);
             }
+
             if ($category == 'blackjack') {
-                expect($gameCount)->toBe(2); // 2 blackjack games  
-                expect($totalWager)->toBe(2000.25); // 800.25 + 1200.00
+                expect($gameCount)->toBe(2);
+                expect($totalWager)->toBe(2000.25);
+                expect($totalMatches)->toBe(20);
             }
         }
     }
 
-    // Step 4: Query by other attributes (using different indexes)
-    echo "🔍 Step 4: Querying by other attributes...\n";
+    $activeGames = GameStub::where('status', 'active')->get();
+    $completedGames = GameStub::where('status', 'completed')->get();
 
-    echo "Active games (using idx:games:status:active):\n";
-    $activeGames = Game::where('status', 'active')->get();
-    foreach ($activeGames as $game) {
-        echo "  - {$game->name} (Game ID: {$game->game_id})\n";
-    }
-    expect($activeGames->count())->toBe(5); // 5 active games (all except roulette)
+    expect($activeGames->count())->toBe(5);
+    expect($completedGames->count())->toBe(1);
 
-    echo "\nPoker games (using idx:games:category:poker):\n";
-    $pokerGames = Game::where('category', 'poker')->get();
-    foreach ($pokerGames as $game) {
-        echo "  - {$game->name} (Wager: \${$game->total_wager})\n";
-    }
-    expect($pokerGames->count())->toBe(2); // 2 poker games
+    $game1001 = GameStub::find(1001);
+    $game1001Query = GameStub::where('game_id', 1001)->first();
 
-    // Step 4a: Demonstrate Model::find($primaryKey) with game_id as primary key
-    echo "\n🔑 Step 4a: Using Model::find(\$primaryKey) with game_id as primary key...\n";
-    
-    // Since game_id is our primary key, we can find directly by game_id
-    $game1001 = Game::find(1001);
-    if ($game1001) {
-        echo "✅ Found game with primary key 1001: {$game1001->name}\n";
-        echo "   💰 Wager: \${$game1001->total_wager}\n";
-        echo "   🎯 This uses direct hash lookup: games:{$game1001->game_id}\n";
-        expect($game1001->game_id)->toBe(1001);
-    } else {
-        echo "❌ Game 1001 not found\n";
-    }
-    
-    $game1002 = Game::find(1002);
-    if ($game1002) {
-        echo "✅ Found game with primary key 1002: {$game1002->name}\n";
-        echo "   💰 Wager: \${$game1002->total_wager}\n";
-        expect($game1002->game_id)->toBe(1002);
-    }
-    
-    // Test finding non-existent game
-    $nonExistent = Game::find(9999);
-    expect($nonExistent)->toBeNull();
-    echo "✅ Game::find(9999) correctly returns null for non-existent game\n";
-    
-    echo "\n📊 Primary Key vs Secondary Index Performance:\n";
-    echo "   🚀 Model::find(1001) - Direct hash lookup: games:1001 - O(1) performance!\n";
-    echo "   ⚡ Game::where('game_id', 1001) - Uses secondary index - O(log n) performance\n";
-    echo "   🎯 Both work in Redis Cluster, but find() is faster for single records\n\n";
+    expect($game1001)->not->toBeNull();
+    expect($game1001Query)->not->toBeNull();
+    expect($game1001->is($game1001Query))->toBeTrue();
 
-    // Step 5: Show performance difference
-    echo "\n⚡ Step 5: Performance comparison...\n";
-    
-    $start = microtime(true);
-    // This uses the secondary index idx:games:game_id:1001 - O(log n) performance!
-    $game1001Records = Game::where('game_id', 1001)->get();
-    $indexTime = microtime(true) - $start;
+    $gameToUpdate = GameStub::where('game_id', 1001)->first();
+    $oldWager = $gameToUpdate->total_wager;
 
-    echo "🚀 Index-based query for game_id 1001: " . round($indexTime * 1000, 2) . "ms\n";
-    echo "   Found {$game1001Records->count()} records instantly using sorted set index\n";
-    echo "   Index key used: idx:games:game_id:1001\n";
-    echo "   Performance: O(log n) instead of O(n) SCAN operation\n\n";
+    $gameToUpdate->update([
+        'total_wager' => $oldWager + 500.00,
+        'match_count' => $gameToUpdate->match_count + 5,
+        'status' => 'completed',
+    ]);
 
-    // Step 6: Update a game (indexes are automatically maintained)
-    echo "✏️  Step 6: Updating a game (indexes auto-update)...\n";
+    $newActiveGames = GameStub::where('status', 'active')->get();
+    $newCompletedGames = GameStub::where('status', 'completed')->get();
 
-    $gameToUpdate = Game::where('game_id', 1001)->first();
-    if ($gameToUpdate) {
-        $oldWager = $gameToUpdate->total_wager;
-        $gameToUpdate->update([
-            'total_wager' => $gameToUpdate->total_wager + 500.00,
-            'match_count' => $gameToUpdate->match_count + 5,
-            'status' => 'completed'
-        ]);
-        
-        echo "✅ Updated game: {$gameToUpdate->name}\n";
-        echo "   💰 Wager: \${$oldWager} → \${$gameToUpdate->total_wager}\n";
-        echo "   📊 Status: active → {$gameToUpdate->status}\n";
-        echo "   🔧 Indexes automatically updated:\n";
-        echo "      - Removed from idx:games:status:active\n";
-        echo "      - Added to idx:games:status:completed\n";
-        echo "      - Updated in idx:games:game_id:1001\n\n";
-    }
+    expect($newActiveGames->count())->toBe(4);
+    expect($newCompletedGames->count())->toBe(2);
 
-    // Step 7: Advanced querying - get all completed games
-    echo "🏁 Step 7: Finding all completed games (using idx:games:status:completed)...\n";
-    $completedGames = Game::where('status', 'completed')->get();
-    echo "Found {$completedGames->count()} completed games:\n";
-    foreach ($completedGames as $game) {
-        echo "  - {$game->name} (Game ID: {$game->game_id}) - \${$game->total_wager}\n";
-    }
-    expect($completedGames->count())->toBe(2); // 1 original + 1 updated
+    $gameToDelete = GameStub::where('game_id', 1003)->first();
+    expect($gameToDelete)->not->toBeNull();
 
-    // Step 8: Cleanup - Remove some games (indexes auto-cleanup)
-    echo "\n🗑️  Step 8: Removing games (indexes auto-cleanup)...\n";
+    $gameToDelete->delete();
 
-    $gamesToRemove = Game::where('game_id', 1003)->get();
-    foreach ($gamesToRemove as $game) {
-        echo "❌ Deleting: {$game->name}\n";
-        $game->delete(); // Automatically cleans up ALL related indexes!
-        echo "   🔧 Automatically removed from:\n";
-        echo "      - idx:games (main index)\n";
-        echo "      - idx:games:game_id:1003\n";
-        echo "      - idx:games:status:completed\n";
-        echo "      - idx:games:category:roulette\n";
-    }
+    expect(GameStub::find(1003))->toBeNull();
+    expect(GameStub::where('category', 'roulette')->get())->toHaveCount(0);
 
-    // Step 9: Final consolidation report
-    echo "\n📊 Step 9: Final consolidation report...\n";
-
-    $remainingGameIds = [1001, 1002, 1004];
-    $grandTotal = ['wager' => 0, 'matches' => 0];
-
-    foreach ($remainingGameIds as $gameId) {
-        $records = Game::where('game_id', $gameId)->get(); // Uses index for each query
-        if ($records->count() > 0) {
-            $totalWager = $records->sum('total_wager');
-            $totalMatches = $records->sum('match_count');
-            $grandTotal['wager'] += $totalWager;
-            $grandTotal['matches'] += $totalMatches;
-            
-            echo "Game {$gameId}: \${$totalWager} wager, {$totalMatches} matches\n";
-        }
-    }
-
-    echo "\n🎯 GRAND TOTAL:\n";
-    echo "💰 Total Wager: $" . number_format($grandTotal['wager'], 2) . "\n";
-    echo "🎮 Total Matches: {$grandTotal['matches']}\n\n";
-
-    // Verify totals
-    expect($grandTotal['wager'])->toBeGreaterThan(0);
-    expect($grandTotal['matches'])->toBeGreaterThan(0);
-
-    echo "🎉 Demo completed! This shows how IndexedRedisRepository:\n";
-    echo "   ✅ Automatically creates secondary indexes for searchable attributes\n";
-    echo "   ✅ Provides O(log n) query performance instead of O(n) SCAN\n";
-    echo "   ✅ Works perfectly in both single Redis and Redis Cluster\n";
-    echo "   ✅ Automatically maintains indexes on create/update/delete\n";
-    echo "   ✅ Enables efficient data consolidation by any searchable field\n";
-    echo "   ✅ No configuration needed - just set repository = 'indexed'\n\n";
-
-    // Cleanup test data
-    $allGames = Game::all();
-    foreach ($allGames as $game) {
-        $game->delete();
-    }
-
-    // Final assertion - all tests passed
-    expect(true)->toBeTrue();
+    expect(GameStub::get())->toHaveCount(5);
 });
