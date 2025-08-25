@@ -5,13 +5,8 @@ namespace DirectoryTree\ActiveRedis\Tests;
 use DirectoryTree\ActiveRedis\Repositories\ClusterRedisRepository;
 use Illuminate\Support\Facades\Redis;
 
-beforeEach(function () {
-    // Use default Redis connection for cluster repository tests
-    // This tests backward compatibility with normal Redis
-});
-
 it('can check if a hash exists in cluster repository', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:exists:'.uniqid();
@@ -26,7 +21,7 @@ it('can check if a hash exists in cluster repository', function () {
 });
 
 it('can set and get a single attribute in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:single:'.uniqid();
@@ -41,7 +36,7 @@ it('can set and get a single attribute in cluster', function () {
 });
 
 it('can set and get multiple attributes in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:multiple:'.uniqid();
@@ -59,7 +54,7 @@ it('can set and get multiple attributes in cluster', function () {
 });
 
 it('can delete attributes in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:delete:'.uniqid();
@@ -81,7 +76,7 @@ it('can delete attributes in cluster', function () {
 });
 
 it('can delete a hash in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:deletehash:'.uniqid();
@@ -94,7 +89,7 @@ it('can delete a hash in cluster', function () {
 });
 
 it('can set and get expiry in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:expiry:'.uniqid();
@@ -112,7 +107,7 @@ it('can set and get expiry in cluster', function () {
 });
 
 it('returns null for expiry of non-existent key in cluster', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $hash = 'test:cluster:nonexistent:'.uniqid();
@@ -121,7 +116,7 @@ it('returns null for expiry of non-existent key in cluster', function () {
 });
 
 it('can chunk through hashes matching a pattern', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     $prefix = 'test:cluster:chunk:'.uniqid();
@@ -149,7 +144,7 @@ it('can chunk through hashes matching a pattern', function () {
 });
 
 it('can perform transactions in cluster (same slot)', function () {
-    $redis = Redis::connection('default');
+    $redis = Redis::connection();
     $repository = new ClusterRedisRepository($redis);
 
     // Use hash tags to ensure keys are in the same slot
