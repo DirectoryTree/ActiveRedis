@@ -5,8 +5,8 @@ namespace DirectoryTree\ActiveRedis\Repositories;
 use Closure;
 use Generator;
 use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Redis\Connections\PhpRedisConnection;
 use Illuminate\Redis\Connections\PredisConnection;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class ClusterRedisRepository implements Repository
@@ -28,7 +28,7 @@ class ClusterRedisRepository implements Repository
 
     /**
      * Chunk through the hashes matching the given pattern.
-     * 
+     *
      * In cluster mode, this method scans all nodes and aggregates results.
      * For regular Redis, it works identically to RedisRepository.
      */
@@ -52,6 +52,7 @@ class ClusterRedisRepository implements Repository
 
             if (empty($prefix)) {
                 yield $keys;
+
                 continue;
             }
 
@@ -68,15 +69,15 @@ class ClusterRedisRepository implements Repository
     {
         $host = $node['host'];
         $port = $node['port'];
-        
+
         // Create connection to specific node
         $nodeConnection = $this->createNodeConnection($host, $port);
-        
+
         [$cursor, $prefix] = [0, ''];
 
         do {
             [$cursor, $keys] = $nodeConnection->scan($cursor, [
-                'match' => $prefix . $pattern,
+                'match' => $prefix.$pattern,
                 'count' => $count,
             ]);
 
@@ -86,6 +87,7 @@ class ClusterRedisRepository implements Repository
 
             if (empty($prefix)) {
                 yield $keys;
+
                 continue;
             }
 
@@ -123,8 +125,17 @@ class ClusterRedisRepository implements Repository
     protected function isClusterConnection(): bool
     {
         try {
-            // Try to execute CLUSTER INFO command
-            $this->redis->command('CLUSTER', ['INFO']);
+            if ($this->redis instanceof PredisConnection) {
+                // Use Predis command method
+                $this->redis->command('CLUSTER', ['INFO']);
+            } elseif ($this->redis instanceof PhpRedisConnection) {
+                // Use PhpRedis rawCommand method
+                $this->redis->rawCommand('CLUSTER', 'INFO');
+            } else {
+                // Fallback for other connection types
+                return false;
+            }
+
             return true;
         } catch (\Exception) {
             return false;
@@ -150,10 +161,10 @@ class ClusterRedisRepository implements Repository
     {
         try {
             $client = $this->redis->client();
-            
+
             if (method_exists($client, 'getConnection')) {
                 $connections = $client->getConnection();
-                
+
                 if (is_array($connections)) {
                     $nodes = [];
                     foreach ($connections as $connection) {
@@ -163,14 +174,16 @@ class ClusterRedisRepository implements Repository
                             'port' => $parameters->port ?? 6379,
                         ];
                     }
+
                     return $nodes;
                 }
             }
 
             // Try to get cluster nodes via CLUSTER NODES command
             $nodesInfo = $this->redis->execute(['CLUSTER', 'NODES']);
+
             return $this->parseClusterNodesOutput($nodesInfo);
-            
+
         } catch (\Exception $e) {
             // Fallback: assume single node
             return [['host' => 'localhost', 'port' => 6379]];
@@ -185,19 +198,22 @@ class ClusterRedisRepository implements Repository
         try {
             // Try to get master nodes from cluster
             $client = $this->redis->client();
-            
+
             if (method_exists($client, '_masters')) {
                 $masters = $client->_masters();
+
                 return array_map(function ($master) {
                     [$host, $port] = explode(':', $master);
-                    return ['host' => $host, 'port' => (int)$port];
+
+                    return ['host' => $host, 'port' => (int) $port];
                 }, $masters);
             }
 
             // Fallback: parse CLUSTER NODES output
             $nodesInfo = $this->redis->rawCommand('CLUSTER', 'NODES');
+
             return $this->parseClusterNodesOutput($nodesInfo);
-            
+
         } catch (\Exception $e) {
             // Fallback: assume single node
             return [['host' => 'localhost', 'port' => 6379]];
@@ -211,29 +227,33 @@ class ClusterRedisRepository implements Repository
     {
         $lines = explode("\n", trim($output));
         $nodes = [];
-        
+
         foreach ($lines as $line) {
-            if (empty($line)) continue;
-            
+            if (empty($line)) {
+                continue;
+            }
+
             $parts = explode(' ', $line);
-            if (count($parts) < 3) continue;
-            
+            if (count($parts) < 3) {
+                continue;
+            }
+
             $endpoint = $parts[1];
             if (strpos($endpoint, '@') !== false) {
                 $endpoint = explode('@', $endpoint)[0];
             }
-            
+
             [$host, $port] = explode(':', $endpoint);
-            
+
             // Only include master nodes for scanning
             if (strpos($parts[2], 'master') !== false) {
                 $nodes[] = [
                     'host' => $host,
-                    'port' => (int)$port,
+                    'port' => (int) $port,
                 ];
             }
         }
-        
+
         return $nodes ?: [['host' => 'localhost', 'port' => 6379]];
     }
 
@@ -314,6 +334,7 @@ class ClusterRedisRepository implements Repository
     public function getExpiry(string $hash): ?int
     {
         $ttl = $this->redis->ttl($hash);
+
         return $ttl > 0 ? $ttl : null;
     }
 
@@ -335,7 +356,7 @@ class ClusterRedisRepository implements Repository
 
     /**
      * Perform a Redis transaction.
-     * 
+     *
      * Note: In cluster mode, transactions are limited to keys in the same hash slot.
      * Consider using hash tags in your key design to ensure related keys are co-located.
      */
