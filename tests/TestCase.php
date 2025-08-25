@@ -22,29 +22,11 @@ abstract class TestCase extends BaseTestCase
     {
         // Configure Redis connections for testing
         $app['config']->set('database.redis.default', [
-            'client' => 'predis',
+            'client' => 'phpredis',
             'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
-        ]);
-
-        $app['config']->set('database.redis.cluster', [
-            'client' => 'predis',
-            'cluster' => 'redis',
-            'default' => [
-                'host' => '127.0.0.1',
-                'port' => 7001,
-                'database' => 0,
-            ],
-            'clusters' => [
-                ['host' => '127.0.0.1', 'port' => 7001],
-                ['host' => '127.0.0.1', 'port' => 7002],
-                ['host' => '127.0.0.1', 'port' => 7003],
-            ],
-            'options' => [
-                'cluster' => 'redis',
-            ],
         ]);
     }
 }
