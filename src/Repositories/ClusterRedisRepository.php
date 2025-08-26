@@ -356,83 +356,9 @@ class ClusterRedisRepository implements Repository
 
     /**
      * Perform a Redis transaction.
-     *
-     * Note: In cluster mode, transactions are limited to keys in the same hash slot.
-     * Consider using hash tags in your key design to ensure related keys are co-located.
      */
     public function transaction(Closure $operation): void
     {
-        // Use Redis pipeline instead of transaction for better compatibility
-        $this->redis->pipeline(function ($pipe) use ($operation) {
-            // Create a wrapper repository that uses the pipeline
-            $pipelineRepo = new class($pipe) implements Repository
-            {
-                private $pipe;
-
-                public function __construct($pipe)
-                {
-                    $this->pipe = $pipe;
-                }
-
-                public function exists(string $hash): bool
-                {
-                    return $this->pipe->exists($hash);
-                }
-
-                public function chunk(string $pattern, int $count): Generator
-                {
-                    yield from [];
-                }
-
-                public function setAttribute(string $hash, string $attribute, string $value): void
-                {
-                    $this->pipe->hset($hash, $attribute, $value);
-                }
-
-                public function setAttributes(string $hash, array $attributes): void
-                {
-                    $this->pipe->hmset($hash, $attributes);
-                }
-
-                public function getAttribute(string $hash, string $field): mixed
-                {
-                    return $this->pipe->hget($hash, $field);
-                }
-
-                public function getAttributes(string $hash): array
-                {
-                    return $this->pipe->hgetall($hash);
-                }
-
-                public function setExpiry(string $hash, int $seconds): void
-                {
-                    $this->pipe->expire($hash, $seconds);
-                }
-
-                public function getExpiry(string $hash): ?int
-                {
-                    $ttl = $this->pipe->ttl($hash);
-
-                    return $ttl > 0 ? $ttl : null;
-                }
-
-                public function deleteAttributes(string $hash, array|string $attributes): void
-                {
-                    $this->pipe->hdel($hash, ...(array) $attributes);
-                }
-
-                public function delete(string $hash): void
-                {
-                    $this->pipe->del($hash);
-                }
-
-                public function transaction(Closure $operation): void
-                {
-                    throw new \RuntimeException('Nested transactions are not supported');
-                }
-            };
-
-            $operation($pipelineRepo);
-        });
+        $operation($this);
     }
 }
