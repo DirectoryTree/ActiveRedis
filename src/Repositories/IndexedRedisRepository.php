@@ -142,7 +142,6 @@ class IndexedRedisRepository implements Repository
         $parts = explode(':', $hash);
 
         // For patterns like "test:indexed:query:1:uniqueid" or "visits:id:123"
-        // We need to determine the model name intelligently
         if (str_contains($hash, 'test:indexed')) {
             // Handle test cases - find the pattern up to the number
             if (count($parts) >= 4 && is_numeric($parts[count($parts) - 1])) {
@@ -240,45 +239,10 @@ class IndexedRedisRepository implements Repository
      */
     public function delete(string $hash): void
     {
-        // Get attributes BEFORE deleting the hash so we can clean up indexes
         $attributes = $this->getAttributes($hash);
         $this->cleanupIndexes($hash, $attributes);
+
         $this->baseRepository->delete($hash);
-    }
-
-    /**
-     * Clean up secondary indexes when deleting a hash.
-     */
-    protected function cleanupIndexes(string $hash, array $attributes): void
-    {
-        // Use provided attributes to clean up attribute-specific indexes
-
-        // Get model name using same logic as updateIndexes
-        $parts = explode(':', $hash);
-
-        if (str_contains($hash, 'test:indexed')) {
-            if (count($parts) >= 4 && is_numeric($parts[count($parts) - 1])) {
-                $modelName = implode(':', array_slice($parts, 0, -1));
-            } else {
-                $modelName = implode(':', array_slice($parts, 0, 3));
-            }
-        } else {
-            $modelName = $parts[0];
-        }
-
-        $mainIndexKey = "idx:{$modelName}";
-
-        // Remove from main index
-        $this->redis->zrem($mainIndexKey, $hash);
-
-        // Remove from attribute-specific indexes
-        foreach ($attributes as $attribute => $value) {
-            $norm = $this->normalizeIndexValue($value);
-            if ($norm !== null) {
-                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$norm}";
-                $this->redis->zrem($attrIndexKey, $hash);
-            }
-        }
     }
 
     /**
@@ -327,5 +291,37 @@ class IndexedRedisRepository implements Repository
         $str = (string) $value;
 
         return $str === '' ? null : $str;
+    }
+
+    /**
+     * Clean up secondary indexes when deleting a hash.
+     */
+    protected function cleanupIndexes(string $hash, array $attributes): void
+    {
+        $parts = explode(':', $hash);
+
+        if (str_contains($hash, 'test:indexed')) {
+            if (count($parts) >= 4 && is_numeric($parts[count($parts) - 1])) {
+                $modelName = implode(':', array_slice($parts, 0, -1));
+            } else {
+                $modelName = implode(':', array_slice($parts, 0, 3));
+            }
+        } else {
+            $modelName = $parts[0];
+        }
+
+        $mainIndexKey = "idx:{$modelName}";
+
+        // Remove from main index
+        $this->redis->zrem($mainIndexKey, $hash);
+
+        // Remove from attribute-specific indexes
+        foreach ($attributes as $attribute => $value) {
+            $norm = $this->normalizeIndexValue($value);
+            if ($norm !== null) {
+                $attrIndexKey = "idx:{$modelName}:{$attribute}:{$norm}";
+                $this->redis->zrem($attrIndexKey, $hash);
+            }
+        }
     }
 }
