@@ -67,17 +67,35 @@ class RedisRepository implements Repository
         return match (true) {
             $this->redis instanceof PhpRedisConnection => [
                 'cursor' => null,
-                'prefix' => $this->redis->getOption($this->redis->client()::OPT_PREFIX),
+                'prefix' => $this->resolvePhpRedisPrefix(),
             ],
             $this->redis instanceof PredisConnection => [
                 'cursor' => 0,
-                'prefix' => $this->redis->getOptions()->prefix->getPrefix(),
+                'prefix' => $this->redis->getOptions()->prefix?->getPrefix(),
             ],
             default => [
                 'cursor' => null,
                 'prefix' => null,
-            ]
+            ],
         };
+    }
+
+    /**
+     * Resolve PHP Redis Prefix
+     */
+    protected function resolvePhpRedisPrefix(): ?string
+    {
+        $client = $this->redis->client();
+
+        if ($client instanceof \RedisCluster) {
+            return null;
+        }
+
+        try {
+            return $client->getOption(\Redis::OPT_PREFIX) ?: null;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
