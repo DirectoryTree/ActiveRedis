@@ -27,7 +27,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
-use InvalidArgumentException;
 use JsonException;
 use Stringable;
 
@@ -432,9 +431,9 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     protected function newRepository(): Repository
     {
         return match ($repository = static::$repository) {
+            'redis' => app(RedisRepository::class, [$this->getConnection()]),
             'array' => app(ArrayRepository::class),
-            'redis' => app(RedisRepository::class, ['redis' => $this->getConnection()]),
-            default => throw new InvalidArgumentException("Repository [{$repository}] is not supported."),
+            default => app($repository, [$this]),
         };
     }
 
