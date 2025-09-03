@@ -3,11 +3,16 @@
 namespace DirectoryTree\ActiveRedis\Tests\Stubs;
 
 use Closure;
+use DirectoryTree\ActiveRedis\Model;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
 use Generator;
 
 class NullRepository implements Repository
 {
+    public function __construct(
+        protected Model $model
+    ) {}
+
     public function exists(string $hash): bool
     {
         return false;
