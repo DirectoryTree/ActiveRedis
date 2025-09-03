@@ -3,6 +3,7 @@
 namespace DirectoryTree\ActiveRedis;
 
 use DirectoryTree\ActiveRedis\Repositories\ArrayRepository;
+use DirectoryTree\ActiveRedis\Repositories\RepositoryFactory;
 use Illuminate\Support\ServiceProvider;
 
 class ActiveRedisServiceProvider extends ServiceProvider
@@ -15,6 +16,7 @@ class ActiveRedisServiceProvider extends ServiceProvider
         Model::clearBootedModels();
 
         $this->app->singleton(ArrayRepository::class);
+        $this->app->singleton(RepositoryFactory::class);
     }
 
     /**

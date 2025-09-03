@@ -14,9 +14,8 @@ use DirectoryTree\ActiveRedis\Concerns\Routable;
 use DirectoryTree\ActiveRedis\Exceptions\DuplicateKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\InvalidKeyException;
 use DirectoryTree\ActiveRedis\Exceptions\JsonEncodingException;
-use DirectoryTree\ActiveRedis\Repositories\ArrayRepository;
-use DirectoryTree\ActiveRedis\Repositories\RedisRepository;
 use DirectoryTree\ActiveRedis\Repositories\Repository;
+use DirectoryTree\ActiveRedis\Repositories\RepositoryFactory;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Contracts\Support\Arrayable;
@@ -426,15 +425,19 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     }
 
     /**
+     * Get the repository for the model.
+     */
+    public static function getRepository(): string
+    {
+        return static::$repository;
+    }
+
+    /**
      * Create a new repository instance.
      */
     protected function newRepository(): Repository
     {
-        return match ($repository = static::$repository) {
-            'redis' => app(RedisRepository::class, [$this->getConnection()]),
-            'array' => app(ArrayRepository::class),
-            default => app($repository, [$this]),
-        };
+        return app(RepositoryFactory::class)->make($this);
     }
 
     /**
@@ -448,7 +451,7 @@ abstract class Model implements Arrayable, ArrayAccess, Jsonable, Stringable, Ur
     /**
      * Get the current connection name for the model.
      */
-    public function getConnectionName(): string
+    public function getConnectionName(): ?string
     {
         return $this->connection;
     }
