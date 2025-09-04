@@ -31,6 +31,8 @@ class RedisRepository implements Repository
      */
     public function chunk(string $pattern, int $count): Generator
     {
+        $count = max(1, $count);
+
         [$cursor, $prefix] = array_values($this->getScanParameters());
 
         do {
@@ -53,10 +55,10 @@ class RedisRepository implements Repository
                 continue;
             }
 
-            yield array_map(function (string $key) use ($prefix) {
+            yield array_map(static function (string $key) use ($prefix) {
                 return Str::after($key, $prefix);
             }, $keys);
-        } while ($cursor !== '0');
+        } while ((string) $cursor !== '0');
     }
 
     /**
@@ -75,7 +77,7 @@ class RedisRepository implements Repository
             ],
             default => [
                 'cursor' => null,
-                'prefix' => null,
+                'prefix' => '',
             ]
         };
     }
