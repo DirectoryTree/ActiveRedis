@@ -23,7 +23,7 @@ class RedisRepository implements Repository
      */
     public function exists(string $hash): bool
     {
-        return $this->redis->exists($hash);
+        return (bool) $this->redis->exists($hash);
     }
 
     /**
@@ -40,10 +40,6 @@ class RedisRepository implements Repository
                 'match' => $prefix.$pattern,
                 'count' => $count,
             ]);
-
-            if (is_null($keys)) {
-                return;
-            }
 
             if (empty($keys)) {
                 continue;
@@ -69,11 +65,11 @@ class RedisRepository implements Repository
         return match (true) {
             $this->redis instanceof PhpRedisConnection => [
                 'cursor' => null,
-                'prefix' => $this->redis->getOption($this->redis->client()::OPT_PREFIX),
+                'prefix' => (string) ($this->redis->getOption($this->redis->client()::OPT_PREFIX) ?: ''),
             ],
             $this->redis instanceof PredisConnection => [
                 'cursor' => 0,
-                'prefix' => $this->redis->getOptions()->prefix->getPrefix(),
+                'prefix' => (string) ($this->redis->getOptions()->prefix?->getPrefix() ?? ''),
             ],
             default => [
                 'cursor' => null,
