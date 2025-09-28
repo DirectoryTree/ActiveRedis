@@ -41,6 +41,10 @@ class RedisRepository implements Repository
                 'count' => $count,
             ]);
 
+            if (is_null($keys)) {
+                return;
+            }
+
             if (empty($keys)) {
                 continue;
             }
