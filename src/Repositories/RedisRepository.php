@@ -7,7 +7,6 @@ use Generator;
 use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Redis\Connections\PhpRedisConnection;
 use Illuminate\Redis\Connections\PredisConnection;
-use Illuminate\Support\Str;
 
 class RedisRepository implements Repository
 {
@@ -56,7 +55,7 @@ class RedisRepository implements Repository
             }
 
             yield array_map(static function (string $key) use ($prefix) {
-                return Str::after($key, $prefix);
+                return substr($key, strlen($prefix));
             }, $keys);
         } while ((string) $cursor !== '0');
     }
