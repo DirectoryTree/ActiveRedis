@@ -43,6 +43,11 @@ class NullRepository implements Repository
         return [];
     }
 
+    public function getManyAttributes(array $hashes): array
+    {
+        return [];
+    }
+
     public function setExpiry(string $hash, int $seconds): void
     {
         // Do nothing.
