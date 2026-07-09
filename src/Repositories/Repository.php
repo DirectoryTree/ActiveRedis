@@ -38,6 +38,13 @@ interface Repository
     public function getAttributes(string $hash): array;
 
     /**
+     * Get all the fields for each of the given hashes.
+     *
+     * Returns an array keyed by hash, each containing the hash's fields.
+     */
+    public function getManyAttributes(array $hashes): array;
+
+    /**
      * Set a time-to-live on a hash key.
      */
     public function setExpiry(string $hash, int $seconds): void;

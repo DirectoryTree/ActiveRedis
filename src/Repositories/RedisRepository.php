@@ -114,6 +114,24 @@ class RedisRepository implements Repository
     }
 
     /**
+     * Get all the attributes for each of the given hashes.
+     */
+    public function getManyAttributes(array $hashes): array
+    {
+        if (empty($hashes)) {
+            return [];
+        }
+
+        $responses = $this->redis->pipeline(function ($pipe) use ($hashes) {
+            foreach ($hashes as $hash) {
+                $pipe->hgetall($hash);
+            }
+        });
+
+        return array_combine($hashes, $responses);
+    }
+
+    /**
      * Set a time-to-live on a hash key.
      */
     public function setExpiry(string $hash, int $seconds): void

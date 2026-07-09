@@ -89,6 +89,20 @@ class ArrayRepository implements Repository
     }
 
     /**
+     * Get all the attributes for each of the given hashes.
+     */
+    public function getManyAttributes(array $hashes): array
+    {
+        $attributes = [];
+
+        foreach ($hashes as $hash) {
+            $attributes[$hash] = $this->getAttributes($hash);
+        }
+
+        return $attributes;
+    }
+
+    /**
      * Set a time-to-live on a hash key.
      *
      * Not supported in ArrayRepository.
