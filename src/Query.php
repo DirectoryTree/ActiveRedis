@@ -235,8 +235,8 @@ class Query
         foreach ($this->repository->chunk($this->getQuery(), $count) as $chunk) {
             $models = $this->model->newCollection();
 
-            foreach ($chunk as $hash) {
-                $models->add($this->newModelFromHash($hash));
+            foreach ($this->repository->getManyAttributes($chunk) as $hash => $attributes) {
+                $models->add($this->newModelFromHash($hash, $attributes));
             }
 
             if ($callback($models) === false) {
@@ -248,10 +248,10 @@ class Query
     /**
      * Create a new model instance from the given hash.
      */
-    protected function newModelFromHash(string $hash): Model
+    protected function newModelFromHash(string $hash, ?array $attributes = null): Model
     {
         return $this->model->newFromBuilder([
-            ...$this->repository->getAttributes($hash),
+            ...$attributes ?? $this->repository->getAttributes($hash),
             $this->model->getKeyName() => $this->getKeyValue($hash),
         ]);
     }
