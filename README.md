@@ -1,23 +1,31 @@
 <p align="center">
-<img src="https://github.com/DirectoryTree/ActiveRedis/blob/master/art/logo.svg" width="250">
+    <img src="https://github.com/DirectoryTree/ActiveRedis/blob/master/art/logo.svg" width="300" alt="ActiveRedis">
+</p>
+
+<p align="center">An Active Record implementation for Redis hashes in Laravel.</p>
+
+<p align="center">
+    <a href="https://github.com/DirectoryTree/ActiveRedis/actions/workflows/run-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/DirectoryTree/ActiveRedis/run-tests.yml?branch=master&amp;style=flat-square" alt="Tests"></a>
+    <a href="https://packagist.org/packages/directorytree/activeredis"><img src="https://img.shields.io/packagist/dt/directorytree/activeredis.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/directorytree/activeredis"><img src="https://img.shields.io/packagist/v/directorytree/activeredis.svg?style=flat-square" alt="Latest Version"></a>
+    <a href="https://github.com/DirectoryTree/ActiveRedis/blob/master/LICENSE"><img src="https://img.shields.io/github/license/DirectoryTree/ActiveRedis?style=flat-square" alt="License"></a>
 </p>
 
 <p align="center">
-An Active Record implementation for Redis hashes in Laravel.
-</p>
-
-<p align="center">
-<a href="https://github.com/directorytree/activeredis/actions" target="_blank"><img src="https://img.shields.io/github/actions/workflow/status/directorytree/activeredis/run-tests.yml?branch=master&style=flat-square"/></a>
-<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/v/directorytree/activeredis.svg?style=flat-square"/></a>
-<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/dt/directorytree/activeredis.svg?style=flat-square"/></a>
-<a href="https://packagist.org/packages/directorytree/activeredis" target="_blank"><img src="https://img.shields.io/packagist/l/directorytree/activeredis.svg?style=flat-square"/></a>
+    <a href="#contents">Contents</a>
+    <span> · </span>
+    <a href="#installation">Installation</a>
+    <span> · </span>
+    <a href="#usage">Usage</a>
+    <span> · </span>
+    <a href="#testing">Testing</a>
 </p>
 
 ---
 
 ActiveRedis provides you simple and efficient way to interact with Redis hashes using an Eloquent-like API.
 
-## Index
+## Contents
 
 - [Requirements](#requirements)
 - [Installation](#installation)
